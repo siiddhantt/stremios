@@ -139,6 +139,13 @@ int main(void) {
         check([episode[@"title"] isEqual:@"Saved playback"], "legacy record has a visible neutral placeholder");
         NSDictionary *filmMetadata = @{@"metadataID":@"tt100001", @"type":@"movie", @"title":@"A Test Film", @"posterURL":@"https://images.metahub.space/poster/medium/tt100001/img", @"releaseInfo":@"2024", @"streamURL":@"https://private.invalid/token/stream.mp4", @"credentials":@"secret"};
         [migrated registerMetadata:filmMetadata forVideoIdentifier:@"tt100001"];
+        NSString *origin = @"4FBAA1B5-2529-4B9D-9A83-8657B43D44A1";
+        [migrated registerMetadata:@{@"originConnectionIdentifier":origin} forVideoIdentifier:@"tt100001"];
+        check([[[migrated recordForIdentifier:@"tt100001"] objectForKey:@"originConnectionIdentifier"] isEqual:origin], "local catalog origin UUID persists without a configured URL");
+        [migrated registerMetadata:@{@"originConnectionIdentifier":@"https://configured.invalid/private"} forVideoIdentifier:@"tt100001"];
+        check(![migrated recordForIdentifier:@"tt100001"][@"originConnectionIdentifier"], "configured URLs cannot enter the origin UUID field");
+        [migrated registerMetadata:@{@"originConnectionIdentifier":origin.lowercaseString} forVideoIdentifier:@"tt100001"];
+        check([[[migrated recordForIdentifier:@"tt100001"] objectForKey:@"originConnectionIdentifier"] isEqual:origin], "valid local origin UUID is normalized consistently");
         check(samePosition([migrated resumeFor:@"tt100001" duration:6000], 4339), "metadata enrichment never resets migrated progress");
         check([[migrated recordForIdentifier:@"tt100001"][@"title"] isEqual:@"A Test Film"], "metadata enrichment replaces placeholder");
         check([[migrated recordForIdentifier:@"tt100001"][@"posterURL"] hasPrefix:@"https://images.metahub.space/"], "public catalog poster survives reload");

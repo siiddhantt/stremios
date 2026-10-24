@@ -9,7 +9,8 @@ FOUNDATION_EXPORT NSString * const MSLibraryDidChangeNotification;
 - (NSTimeInterval)resumeFor:(NSString *)identifier duration:(NSTimeInterval)duration;
 - (void)savePosition:(NSTimeInterval)seconds duration:(NSTimeInterval)duration for:(NSString *)identifier;
 - (void)clearPositionFor:(NSString *)identifier;
-/// Public catalog metadata only; unknown keys and playback addresses are discarded.
+/// Public catalog metadata and an optional local originConnectionIdentifier UUID;
+/// unknown keys and playback addresses are discarded.
 - (void)registerMetadata:(NSDictionary *)metadata forVideoIdentifier:(NSString *)identifier;
 - (nullable NSDictionary *)recordForIdentifier:(NSString *)identifier;
 - (NSArray<NSDictionary *> *)continueWatchingRecords;

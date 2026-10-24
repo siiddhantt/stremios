@@ -51,7 +51,7 @@
     UIViewController *about=[UIViewController new]; about.title=@"About"; about.view.backgroundColor=MSBackgroundColor();
     UITextView *text=[UITextView new]; text.translatesAutoresizingMaskIntoConstraints=NO; text.backgroundColor=MSBackgroundColor(); text.textColor=MSSecondaryColor(); text.editable=NO; text.font=MSFont(UIFontTextStyleBody,UIFontWeightRegular); text.adjustsFontForContentSizeCategory=YES; text.textContainerInset=UIEdgeInsetsMake(24,24,24,24);
     NSURL *URL=[NSBundle.mainBundle URLForResource:@"ThirdPartyNotices" withExtension:@"txt"]; NSString *notices=URL?[NSString stringWithContentsOfURL:URL encoding:NSUTF8StringEncoding error:NULL]:@"";
-    text.text=[NSString stringWithFormat:@"MiniStream\nAn independent native client.\n\nCatalog and artwork: Cinemeta and its providers. Your enabled add-ons provide streams and subtitles. Connections stay in protected app storage. No Stremio account sync or analytics.\n\n%@",notices?:@""];
+    text.text=[NSString stringWithFormat:@"MiniStream\nAn independent native client.\n\nCatalogs, artwork, streams and subtitles come from your enabled add-ons. Connections stay in protected app storage. No Stremio account sync or analytics.\n\n%@",notices?:@""];
     [about.view addSubview:text]; [NSLayoutConstraint activateConstraints:@[[text.leadingAnchor constraintEqualToAnchor:about.view.leadingAnchor],[text.trailingAnchor constraintEqualToAnchor:about.view.trailingAnchor],[text.topAnchor constraintEqualToAnchor:about.view.safeAreaLayoutGuide.topAnchor],[text.bottomAnchor constraintEqualToAnchor:about.view.safeAreaLayoutGuide.bottomAnchor]]]; [self.navigationController pushViewController:about animated:YES];
 }
 - (void)choosePreference:(NSIndexPath *)path {

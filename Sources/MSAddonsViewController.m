@@ -3,6 +3,7 @@
 #import "MSAddonImporter.h"
 #import "MSHTTPClient.h"
 #import "MSTheme.h"
+#import "MSTorBoxSetupViewController.h"
 #import <math.h>
 
 @interface MSAddonsViewController ()
@@ -48,11 +49,22 @@
     [self.store reloadWithError:nil]; [self refreshEntries];
 }
 - (void)viewWillDisappear:(BOOL)animated { [super viewWillDisappear:animated]; self.visible = NO; [self cancelManifest]; }
-- (void)inactive:(NSNotification *)notification { [self cancelManifest]; }
+- (void)inactive:(NSNotification *)notification {
+    (void)notification;
+    [self cancelManifest];
+    // An Update prompt must not survive after its replacement target is cleared.
+    // Clear configured links before dismissing, including while entering the app switcher.
+    UIViewController *presented = self.presentedViewController;
+    if ([presented isKindOfClass:UIAlertController.class]) {
+        for (UITextField *field in ((UIAlertController *)presented).textFields) field.text = @"";
+        [self dismissViewControllerAnimated:NO completion:nil];
+    }
+}
 - (void)cancelManifest {
     self.generation++; [self.manifestRequest cancel]; self.manifestRequest = nil;
     [self.importRequest cancel]; self.importRequest = nil; self.importing = NO;
     self.loading = NO; self.addButton.enabled = YES; [self updateFooter];
+    self.editingAddon=nil;
     [self updateImportButton];
 }
 - (void)addonsChanged:(NSNotification *)notification { [self refreshEntries]; }
@@ -84,16 +96,16 @@
     if (self.importing) self.noticeLabel.text = @"Importing configured add-ons…";
     else if (self.loading) self.noticeLabel.text = @"Checking the add-on manifest…";
     else if (self.store.loadError) self.noticeLabel.text = self.store.loadError.localizedDescription;
-    else self.noticeLabel.text = @"Tap a connection to update its configured link. Swipe left to remove it.";
+    else self.noticeLabel.text = @"Tap a connection to refresh it or update its configured link. Swipe left to remove it.";
     CGFloat width = MAX(self.tableView.bounds.size.width - 40, 100);
     CGSize size = [self.noticeLabel sizeThatFits:CGSizeMake(width, CGFLOAT_MAX)];
     UIView *footer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, width + 40, size.height + 32)];
     self.noticeLabel.frame = CGRectMake(20, 12, width, size.height); [footer addSubview:self.noticeLabel];
     self.tableView.tableFooterView = footer;
 }
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 2; }
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return section == 0 ? self.builtIns.count : self.custom.count; }
-- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section { return section == 0 ? @"Built-in" : @"Your add-ons"; }
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView { return 3; }
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return section == 0 ? self.builtIns.count : section == 1 ? self.custom.count : 2; }
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section { return section == 0 ? @"Built-in" : section == 1 ? @"Your add-ons" : @"Add a connection"; }
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section { return section == 1 && !self.custom.count ? @"Tap + to add a configured manifest address." : nil; }
 - (MSAddon *)addonAtIndexPath:(NSIndexPath *)indexPath { return indexPath.section == 0 ? self.builtIns[indexPath.row] : self.custom[indexPath.row]; }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -107,6 +119,11 @@
     }
     cell.textLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
     cell.detailTextLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    if (indexPath.section==2) {
+        cell.textLabel.text=indexPath.row==0 ? @"Configured add-on link" : @"Connect TorBox";
+        cell.detailTextLabel.text=indexPath.row==0 ? @"Paste a manifest link from your provider." : @"Validate your API key, then choose a connector.";
+        cell.accessoryType=UITableViewCellAccessoryDisclosureIndicator; cell.accessibilityTraits=UIAccessibilityTraitButton; return cell;
+    }
     MSAddon *addon = [self addonAtIndexPath:indexPath];
     cell.textLabel.text = addon.name; cell.detailTextLabel.text = addon.manifestURL.host;
     cell.accessoryType = addon.builtIn ? UITableViewCellAccessoryNone : UITableViewCellAccessoryDisclosureIndicator;
@@ -121,11 +138,29 @@
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)path {
     [tableView deselectRowAtIndexPath:path animated:YES];
-    if(path.section==1 && !self.loading && !self.importing){ self.editingAddon=[self addonAtIndexPath:path]; [self promptForAddon]; }
+    if (self.loading || self.importing || self.presentedViewController) return;
+    if (path.section==2) {
+        if (path.row==0) [self addAddon];
+        else [self.navigationController pushViewController:[MSTorBoxSetupViewController new] animated:YES];
+    } else if(path.section==1) [self showActionsForAddon:[self addonAtIndexPath:path] atIndexPath:path];
+}
+- (void)showActionsForAddon:(MSAddon *)addon atIndexPath:(NSIndexPath *)path {
+    UIAlertController *actions=[UIAlertController alertControllerWithTitle:addon.name message:addon.manifestURL.host preferredStyle:UIAlertControllerStyleActionSheet];
+    __weak typeof(self) weakSelf=self;
+    [actions addAction:[UIAlertAction actionWithTitle:@"Refresh add-on" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) { typeof(self) self=weakSelf; self.editingAddon=addon; [self fetchManifest:addon.manifestURL]; }]];
+    [actions addAction:[UIAlertAction actionWithTitle:@"Update configured link" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) { typeof(self) self=weakSelf; self.editingAddon=addon; dispatch_async(dispatch_get_main_queue(),^{[self promptForAddon];}); }]];
+    if (addon.configurable && MSIsSafeRemoteURL(addon.configureURL)) [actions addAction:[UIAlertAction actionWithTitle:@"Open configuration" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) { [weakSelf offerConfiguration:addon]; }]];
+    [actions addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    actions.popoverPresentationController.sourceView=self.tableView; actions.popoverPresentationController.sourceRect=[self.tableView rectForRowAtIndexPath:path];
+    [self presentViewController:actions animated:YES completion:nil];
 }
 - (void)addAddon { self.editingAddon=nil; [self promptForAddon]; }
 - (void)promptForAddon {
-    if (self.loading || self.importing || self.presentedViewController) return;
+    if (self.loading || self.importing) return;
+    if (self.presentedViewController) {
+        __weak typeof(self) weakSelf=self;
+        [self dismissViewControllerAnimated:NO completion:^{[weakSelf promptForAddon];}]; return;
+    }
     UIAlertController *prompt = [UIAlertController alertControllerWithTitle:self.editingAddon ? @"Update connection" : @"Add add-on" message:@"Paste its configured manifest link, including any service credentials. It is kept in protected app storage." preferredStyle:UIAlertControllerStyleAlert];
     [prompt addTextFieldWithConfigurationHandler:^(UITextField *field) {
         field.placeholder = @"https://…/manifest.json"; field.keyboardType = UIKeyboardTypeURL;
@@ -136,8 +171,8 @@
         field.accessibilityLabel = @"Configured add-on manifest address";
     }];
     __weak UIAlertController *weakPrompt = prompt;
-    [prompt addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) { (void)action; weakPrompt.textFields.firstObject.text = @""; }]];
     __weak typeof(self) weakSelf = self;
+    [prompt addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) { (void)action; weakPrompt.textFields.firstObject.text = @""; weakSelf.editingAddon=nil; }]];
     [prompt addAction:[UIAlertAction actionWithTitle:self.editingAddon ? @"Save" : @"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         (void)action;
         NSString *input = weakPrompt.textFields.firstObject.text ?: @""; weakPrompt.textFields.firstObject.text = @"";
@@ -160,11 +195,30 @@
         if (!manifest || networkError) {
             // Network descriptions may contain the configured URL, so never display them.
             error = [NSError errorWithDomain:@"MiniStreamAddons" code:6 userInfo:@{NSLocalizedDescriptionKey:@"The add-on manifest could not be loaded. Check its address and your connection, then try again."}];
-        } else if (!(self.editingAddon ? [self.store replaceAddon:self.editingAddon manifest:manifest URL:URL error:&error] : [self.store addManifest:manifest URL:URL error:&error])) {
-            // The store returns only deliberate, URL-free validation/storage messages.
+        } else {
+            MSAddon *preview=[MSAddon addonWithManifest:manifest URL:URL error:&error];
+            if (preview.configurationRequired) {
+                self.editingAddon=nil; [self refreshEntries]; [self offerConfiguration:preview]; return;
+            }
+            if (preview && !(self.editingAddon ? [self.store replaceAddon:self.editingAddon manifest:manifest URL:URL error:&error] : [self.store addManifest:manifest URL:URL error:&error])) {
+                // The store returns only deliberate, URL-free validation/storage messages.
+            }
         }
         self.editingAddon=nil; [self refreshEntries]; if (error) [self showError:error];
     }];
+}
+- (void)offerConfiguration:(MSAddon *)addon {
+    if (!self.visible) return;
+    if (self.presentedViewController) {
+        __weak typeof(self) weakSelf=self; [self dismissViewControllerAnimated:NO completion:^{[weakSelf offerConfiguration:addon];}]; return;
+    }
+    NSURL *URL=addon.configureURL;
+    BOOL safe=MSIsSafeRemoteURL(URL);
+    NSString *message=safe ? [NSString stringWithFormat:@"Open %@ to configure this add-on, then copy its install or manifest link and paste it here. Opening an existing configured link shares that configuration with its provider. Nothing is added until a working manifest is saved.",URL.host] : @"This add-on requires configuration. Use its provider's configuration page, then return and paste the configured manifest link. Nothing was added.";
+    UIAlertController *alert=[UIAlertController alertControllerWithTitle:@"Configure add-on" message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+    if (safe) [alert addAction:[UIAlertAction actionWithTitle:@"Open configuration" style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) { [UIApplication.sharedApplication openURL:URL options:@{} completionHandler:nil]; }]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 - (void)showError:(NSError *)error {
     if (!self.visible || !error) return;

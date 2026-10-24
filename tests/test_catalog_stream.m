@@ -3,6 +3,11 @@
 #import "MSCatalogClient.h"
 #import "MSHTTPClient.h"
 #import "MSStream.h"
+#import "MSAddons.h"
+
+static NSURL *TestAddonRoot;
+NSURL *MSAddonTestStorageDirectory(void) { return TestAddonRoot; }
+BOOL MSAddonTestFailCommit(void) { return NO; }
 
 // Host-only production parser/policy tests. Network transport is replaced by a
 // synchronous fixture response while testing catalog paths; no requests occur.
@@ -10,6 +15,10 @@ static unsigned checks=0, failures=0;
 static NSURL *capturedURL;
 static NSDictionary *stubDocument;
 static NSError *stubError;
+static NSMutableArray<NSURL *> *requestedURLs;
+static NSDictionary<NSString *,NSDictionary *> *hostDocuments;
+static BOOL deferFixture;
+static void (^deferredFixtureCompletion)(NSDictionary *,NSError *);
 static void check(BOOL condition,const char *name) {
     checks++; if (!condition) { failures++; fprintf(stderr,"FAIL catalog/stream: %s\n",name); }
 }
@@ -33,7 +42,10 @@ static NSString *repeat(NSString *text,NSUInteger count) {
 @end
 @implementation MSHTTPClient (FixtureTransport)
 - (id<MSCancellable>)test_fetchJSONURL:(NSURL *)URL completion:(void (^)(NSDictionary *,NSError *))completion {
-    capturedURL=URL; completion(stubDocument,stubError); return [MSFixtureRequest new];
+    capturedURL=URL; [requestedURLs addObject:URL];
+    if (deferFixture) deferredFixtureCompletion = [completion copy];
+    else completion(hostDocuments ? hostDocuments[URL.host] : stubDocument,stubError);
+    return [MSFixtureRequest new];
 }
 @end
 static void swapTransport(void) {
@@ -44,6 +56,7 @@ static MSStream *stream(NSDictionary *raw) { return [MSStream streamWithDictiona
 
 int main(void) {
     @autoreleasepool {
+        TestAddonRoot = [[NSURL fileURLWithPath:NSTemporaryDirectory() isDirectory:YES] URLByAppendingPathComponent:[@"MiniStreamCatalogTests-" stringByAppendingString:NSUUID.UUID.UUIDString] isDirectory:YES];
         for (NSString *text in @[@"https://example.invalid/movie.mp4",@"https://example.invalid/a?token=opaque",@"https://8.8.8.8/video"]) {
             check(MSIsSafeRemoteURL([NSURL URLWithString:text]),"public HTTPS-shaped URL accepted without network resolution");
         }
@@ -65,6 +78,16 @@ int main(void) {
         MSMetadata *metadata=[MSMetadata metadataWithDictionary:movie fallbackType:@"movie"];
         check([metadata.identifier isEqualToString:@"tt1254207"] && [metadata.title isEqualToString:@"Big Buck Bunny"],"movie fixture retains identifier and title");
         check([metadata.type isEqualToString:@"movie"] && metadata.posterURL!=nil,"movie type and safe poster mapped");
+        NSMutableDictionary *originInput = [movie mutableCopy]; originInput[@"originConnectionIdentifier"] = @"4FBAA1B5-2529-4B9D-9A83-8657B43D44A1";
+        check(![MSMetadata metadataWithDictionary:originInput fallbackType:@"movie"].originConnectionIdentifier, "remote metadata cannot forge its catalog origin");
+        MSMetadata *localMetadata = [MSMetadata metadataWithDictionary:originInput fallbackType:@"movie" originConnectionIdentifier:originInput[@"originConnectionIdentifier"]];
+        check([localMetadata.originConnectionIdentifier isEqual:originInput[@"originConnectionIdentifier"]], "explicit local reconstruction retains validated origin UUID");
+        check(![MSMetadata metadataWithDictionary:movie fallbackType:@"movie" originConnectionIdentifier:@"https://private.invalid/key"].originConnectionIdentifier, "origin rejects URLs and arbitrary strings");
+        originInput[@"id"] = @"tmdb:42"; originInput[@"behaviorHints"] = @{@"defaultVideoId":@"tt1234567"};
+        MSMetadata *mappedMovie = [MSMetadata metadataWithDictionary:originInput fallbackType:@"movie"];
+        check([mappedMovie.identifier isEqual:@"tmdb:42"] && [mappedMovie.defaultVideoIdentifier isEqual:@"tt1234567"], "provider metadata ID and resolved movie stream ID stay separate");
+        originInput[@"behaviorHints"] = @{@"defaultVideoId":@"https://private.invalid/key"};
+        check([[MSMetadata metadataWithDictionary:originInput fallbackType:@"movie"].defaultVideoIdentifier isEqual:@"tmdb:42"], "invalid default stream ID falls back without rewriting catalog ID");
         check([metadata.imdbRating isEqualToString:@""],"missing IMDb rating stays absent rather than inventing a score");
         NSMutableDictionary *rated=[movie mutableCopy];
         for (NSArray *pair in @[@[@"6.8",@"6.8"],@[@" 7.0 ",@"7.0"],@[@"0",@"0.0"],@[@"10.0",@"10.0"],@[@8.25,@"8.2"]]) {
@@ -175,14 +198,66 @@ int main(void) {
         stubDocument=@{@"metas":@"bad"};
         [[MSCatalogClient sharedClient] loadCatalogType:@"movie" search:nil skip:0 completion:^(MSCatalogPage *p,NSError *e) {page=p;responseError=e;}];
         check(!page && responseError!=nil,"malformed catalog array produces error");
-        stubDocument=fixture(@"cinemeta_meta_series.json");
+        NSMutableDictionary *escapedMeta = [fixture(@"cinemeta_meta_series.json")[@"meta"] mutableCopy]; escapedMeta[@"id"] = @"tt123:1:2/part?x=1"; stubDocument = @{@"meta":escapedMeta};
         __block MSMetadata *returned=nil;
         [[MSCatalogClient sharedClient] loadMetadataType:@"series" identifier:@"tt123:1:2/part?x=1" completion:^(MSMetadata *m,NSError *e) {returned=m;responseError=e;}];
         check(returned!=nil && responseError==nil && [capturedURL.absoluteString hasSuffix:@"/meta/series/tt123%3A1%3A2%2Fpart%3Fx%3D1.json"] && capturedURL.query==nil,"metadata identifier encoded without losing episode syntax");
         stubError=MSNetworkError(@"Fixture transport failure"); stubDocument=nil;
         [[MSCatalogClient sharedClient] loadCatalogType:@"movie" search:nil skip:0 completion:^(MSCatalogPage *p,NSError *e) {page=p;responseError=e;}];
         check(page==nil && responseError==stubError,"network error forwarded without parsing stale data");
+        stubError = nil; requestedURLs = [NSMutableArray array];
+        NSDictionary *generic = @{@"id":@"test.catalog",@"name":@"Language fixture",@"types":@[@"movie",@"series"],@"resources":@[@"catalog",@"meta"],@"catalogs":@[@{@"id":@"language/list",@"type":@"movie",@"name":@"Language",@"extra":@[@{@"name":@"genre",@"isRequired":@YES,@"options":@[@"Hindi",@"English"]},@{@"name":@"search"},@{@"name":@"skip"}]}]};
+        MSAddonStore *store = MSAddonStore.sharedStore;
+        check([store addManifest:generic URL:[NSURL URLWithString:@"https://catalog.example/config%2Fopaque/manifest.json?opaque=example"] error:nil], "isolated fixture connection installed");
+        MSAddon *catalogAddon = store.addons.lastObject; MSAddonCatalog *catalog = catalogAddon.catalogs.firstObject;
+        stubDocument = @{@"metas":@[@{@"id":@"tmdb:42",@"name":@"Hindi film"}]};
+        [[MSCatalogClient sharedClient] loadCatalog:catalog extras:@{@"genre":@"Hindi",@"search":@"a/b & c"} skip:24 completion:^(MSCatalogPage *p,NSError *e){ page=p; responseError=e; }];
+        check(page.items.count == 1 && page.nextSkip == 25 && page.hasMore && [page.items.firstObject.originConnectionIdentifier isEqual:catalogAddon.connectionIdentifier], "generic catalog page preserves connection and raw cursor");
+        check([capturedURL.absoluteString containsString:@"/config%2Fopaque/catalog/movie/language%2Flist/genre=Hindi&search=a%2Fb%20%26%20c&skip=24.json?opaque=example"], "generic catalog keeps configured base and escapes declared extras");
+        NSUInteger beforeInvalid = requestedURLs.count; __block BOOL invalidFinished = NO;
+        [[MSCatalogClient sharedClient] loadCatalog:catalog extras:nil skip:0 completion:^(MSCatalogPage *p,NSError *e){ invalidFinished = !p && e != nil; }];
+        [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        check(invalidFinished && requestedURLs.count == beforeInvalid, "missing required extras fail before network access");
+        __block BOOL cancelledCallback = NO;
+        id<MSCancellable> invalidRequest = [[MSCatalogClient sharedClient] loadCatalog:catalog extras:@{@"genre":@"Not offered"} skip:0 completion:^(MSCatalogPage *p,NSError *e){ (void)p; (void)e; cancelledCallback = YES; }];
+        [invalidRequest cancel]; [NSRunLoop.currentRunLoop runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        check(!cancelledCallback, "cancel suppresses queued validation completion");
+        stubDocument = @{@"meta":@{@"id":@"tmdb:42",@"name":@"Resolved film",@"behaviorHints":@{@"defaultVideoId":@"tt1234567"}}};
+        [requestedURLs removeAllObjects];
+        [[MSCatalogClient sharedClient] loadMetadataType:@"movie" identifier:@"tmdb:42" preferredConnectionIdentifier:catalogAddon.connectionIdentifier completion:^(MSMetadata *m,NSError *e){ returned=m; responseError=e; }];
+        check(returned && !responseError && [returned.originConnectionIdentifier isEqual:catalogAddon.connectionIdentifier] && requestedURLs.count == 1 && [capturedURL.host isEqual:@"catalog.example"], "origin provider resolves non-IMDb metadata before other providers");
+        check([returned.defaultVideoIdentifier isEqual:@"tt1234567"], "resolved default movie stream ID reaches client result");
+        hostDocuments = @{@"catalog.example":@{@"meta":@{@"id":@"ttWrong",@"name":@"Wrong title"}},@"v3-cinemeta.strem.io":@{@"meta":@{@"id":@"tt42",@"name":@"Correct title"}}};
+        [requestedURLs removeAllObjects];
+        [[MSCatalogClient sharedClient] loadMetadataType:@"movie" identifier:@"tt42" preferredConnectionIdentifier:catalogAddon.connectionIdentifier completion:^(MSMetadata *m,NSError *e){ returned=m; responseError=e; }];
+        check([returned.identifier isEqual:@"tt42"] && requestedURLs.count == 2 && [requestedURLs.firstObject.host isEqual:@"catalog.example"] && [requestedURLs.lastObject.host isEqual:@"v3-cinemeta.strem.io"], "wrong-ID provider response falls back to matching compatible metadata");
+        check(![returned.originConnectionIdentifier isEqual:catalogAddon.connectionIdentifier], "fallback result records the responding provider rather than failed origin");
+        hostDocuments = nil; deferFixture = YES; [requestedURLs removeAllObjects];
+        __block BOOL metadataCompletionCalled = NO;
+        id<MSCancellable> pending = [[MSCatalogClient sharedClient] loadMetadataType:@"movie" identifier:@"tmdb:42" preferredConnectionIdentifier:catalogAddon.connectionIdentifier completion:^(MSMetadata *m,NSError *e){ (void)m; (void)e; metadataCompletionCalled = YES; }];
+        void (^lateCompletion)(NSDictionary *,NSError *) = deferredFixtureCompletion; deferredFixtureCompletion = nil; [pending cancel]; lateCompletion(nil,MSNetworkError(@"Cancelled fixture"));
+        check(!metadataCompletionCalled && requestedURLs.count == 1, "cancelled metadata request cannot deliver or start fallback");
+        deferFixture = NO;
+        NSMutableDictionary *single = [generic mutableCopy]; single[@"id"] = @"test.single"; single[@"resources"] = @[@"catalog"]; single[@"catalogs"] = @[@{@"id":@"list",@"name":@"List",@"type":@"movie"}];
+        check([store addManifest:single URL:[NSURL URLWithString:@"https://single.example/manifest.json"] error:nil], "catalog-only provider installed without a metadata resource");
+        MSAddon *singleAddon = store.addons.lastObject; stubDocument = @{@"metas":@[@{@"id":@"tt42",@"name":@"Film"}]};
+        [[MSCatalogClient sharedClient] loadCatalog:singleAddon.catalogs.firstObject extras:nil skip:0 completion:^(MSCatalogPage *p,NSError *e){ page=p; responseError=e; }];
+        check(page.items.count == 1 && !page.hasMore && [capturedURL.path hasSuffix:@"/catalog/movie/list.json"], "unpaginated catalog omits undeclared skip and stops after first page");
+        stubDocument = @{@"meta":@{@"id":@"tt42",@"name":@"Film"}}; [requestedURLs removeAllObjects];
+        [[MSCatalogClient sharedClient] loadMetadataType:@"movie" identifier:@"tt42" preferredConnectionIdentifier:singleAddon.connectionIdentifier completion:^(MSMetadata *m,NSError *e){ returned=m; responseError=e; }];
+        check(returned && requestedURLs.count == 1 && [capturedURL.host isEqual:@"v3-cinemeta.strem.io"], "catalog-only origin uses compatible Cinemeta metadata without querying unsupported resource");
+        NSMutableDictionary *stepped = [single mutableCopy]; stepped[@"id"] = @"test.stepped";
+        stepped[@"catalogs"] = @[@{@"id":@"steps",@"name":@"Stepped list",@"type":@"movie",@"extra":@[@{@"name":@"skip",@"options":@[@"0",@"100",@"200"]}]}];
+        check([store addManifest:stepped URL:[NSURL URLWithString:@"https://steps.example/manifest.json"] error:nil], "declared pagination offsets accepted");
+        MSAddonCatalog *stepCatalog = store.addons.lastObject.catalogs.firstObject;
+        stubDocument = @{@"metas":@[@{@"id":@"tt42",@"name":@"Film"}]};
+        [[MSCatalogClient sharedClient] loadCatalog:stepCatalog extras:nil skip:0 completion:^(MSCatalogPage *p,NSError *e){ page=p; responseError=e; }];
+        check(page.receivedCount == 1 && page.nextSkip == 100 && page.hasMore, "declared next page offset overrides raw-count cursor when provider specifies steps");
+        [[MSCatalogClient sharedClient] loadCatalog:stepCatalog extras:nil skip:200 completion:^(MSCatalogPage *p,NSError *e){ page=p; responseError=e; }];
+        check(page.receivedCount == 1 && !page.hasMore, "last declared pagination offset ends paging");
+        check(![stepCatalog requestExtrasForValues:nil skip:50 error:nil], "undeclared pagination offset cannot be requested");
         swapTransport();
+        [NSFileManager.defaultManager removeItemAtURL:TestAddonRoot error:nil];
         printf("%s %u catalog/stream checks; %u failures (offline fixture transport)\n",failures ? "FAIL" : "PASS",checks,failures);
         return failures ? 1 : 0;
     }

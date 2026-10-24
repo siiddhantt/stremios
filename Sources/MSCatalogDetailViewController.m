@@ -206,6 +206,7 @@ static UIColor *MSBackdropColor(UIImage *image) {
 - (NSDictionary *)libraryMetadataForEpisode:(MSEpisode *)episode {
     NSMutableDictionary *record = [@{@"metadataID":self.metadata.identifier,@"type":self.metadata.type,@"title":self.metadata.title,@"releaseInfo":self.metadata.releaseInfo ?: @""} mutableCopy];
     if (self.metadata.posterURL) record[@"posterURL"] = self.metadata.posterURL.absoluteString;
+    if (self.metadata.originConnectionIdentifier) record[@"originConnectionIdentifier"] = self.metadata.originConnectionIdentifier;
     if (episode) { record[@"episodeTitle"] = episode.title; record[@"season"] = @(episode.season); record[@"episode"] = @(episode.episode); }
     return record;
 }
@@ -214,7 +215,7 @@ static UIColor *MSBackdropColor(UIImage *image) {
     if (self.failed && self.contentRevealed) { self.contentRevealed = NO; self.artworkFailed = NO; self.failedLogoURL = nil; [self beginInitialReveal]; }
     self.loading = YES; self.failed = NO; [self renderMetadata];
     NSUInteger generation = ++self.generation; __weak typeof(self) weakSelf = self;
-    self.metadataRequest = [self.client loadMetadataType:self.metadata.type identifier:self.metadata.identifier completion:^(MSMetadata *metadata,NSError *error) {
+    self.metadataRequest = [self.client loadMetadataType:self.metadata.type identifier:self.metadata.identifier preferredConnectionIdentifier:self.metadata.originConnectionIdentifier completion:^(MSMetadata *metadata,NSError *error) {
         typeof(self) self = weakSelf; if (!self || !self.visible || self.generation != generation) return;
         self.loading = NO; self.metadataRequest = nil;
         if (!metadata || error) { self.failed = YES; [self renderMetadata]; [self revealIfReady]; return; }
@@ -264,7 +265,15 @@ static UIColor *MSBackdropColor(UIImage *image) {
         [self sizeHeader]; [self revealIfReady];
     }];
 }
-- (NSString *)currentVideoIdentifier { return self.selectedEpisode.identifier ?: self.metadata.identifier; }
+- (NSString *)currentVideoIdentifier {
+    if (self.selectedEpisode) return self.selectedEpisode.identifier;
+    if ([self.metadata.type isEqualToString:@"movie"] && self.preferredVideoIdentifier.length) {
+        NSDictionary *saved = [MSLibraryStore.sharedStore recordForIdentifier:self.preferredVideoIdentifier];
+        if ([saved[@"metadataID"] isEqual:self.metadata.identifier] && [saved[@"type"] isEqual:@"movie"] && [saved[@"position"] doubleValue] > 0)
+            return self.preferredVideoIdentifier;
+    }
+    return self.metadata.defaultVideoIdentifier;
+}
 - (NSTimeInterval)resumePosition {
     NSDictionary *record = [MSLibraryStore.sharedStore recordForIdentifier:self.currentVideoIdentifier];
     return [record[@"duration"] doubleValue] > 0 ? [MSLibraryStore.sharedStore resumeFor:self.currentVideoIdentifier duration:[record[@"duration"] doubleValue]] : [record[@"position"] doubleValue];

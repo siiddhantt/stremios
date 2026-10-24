@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 NS_ASSUME_NONNULL_BEGIN
+@class MSAddonCatalog;
 @protocol MSCancellable <NSObject>
 - (void)cancel;
 @end
@@ -13,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @interface MSMetadata : NSObject
 @property(nonatomic, copy, readonly) NSString *identifier;
 @property(nonatomic, copy, readonly) NSString *type;
+@property(nonatomic, copy, readonly, nullable) NSString *originConnectionIdentifier;
+// A provider may resolve its catalog ID to another exact stream ID (e.g. IMDb).
+@property(nonatomic, copy, readonly) NSString *defaultVideoIdentifier;
 @property(nonatomic, copy, readonly) NSString *title;
 @property(nonatomic, strong, readonly, nullable) NSURL *posterURL;
 @property(nonatomic, strong, readonly, nullable) NSURL *backgroundURL;
@@ -27,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSArray<NSString *> *genres;
 @property(nonatomic, copy, readonly) NSArray<MSEpisode *> *episodes;
 + (nullable instancetype)metadataWithDictionary:(NSDictionary *)dictionary fallbackType:(NSString *)type;
++ (nullable instancetype)metadataWithDictionary:(NSDictionary *)dictionary fallbackType:(NSString *)type originConnectionIdentifier:(nullable NSString *)connectionIdentifier;
 @end
 @interface MSCatalogPage : NSObject
 @property(nonatomic, copy, readonly) NSArray<MSMetadata *> *items;
@@ -38,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)sharedClient;
 // Completion always runs on the main queue. Cancellation suppresses completion.
 - (id<MSCancellable>)loadCatalogType:(NSString *)type search:(nullable NSString *)search skip:(NSUInteger)skip completion:(void (^)(MSCatalogPage * _Nullable page, NSError * _Nullable error))completion;
+- (id<MSCancellable>)loadCatalog:(MSAddonCatalog *)catalog extras:(nullable NSDictionary<NSString *, NSString *> *)extras skip:(NSUInteger)skip completion:(void (^)(MSCatalogPage * _Nullable page, NSError * _Nullable error))completion;
 - (id<MSCancellable>)loadMetadataType:(NSString *)type identifier:(NSString *)identifier completion:(void (^)(MSMetadata * _Nullable metadata, NSError * _Nullable error))completion;
+- (id<MSCancellable>)loadMetadataType:(NSString *)type identifier:(NSString *)identifier preferredConnectionIdentifier:(nullable NSString *)connectionIdentifier completion:(void (^)(MSMetadata * _Nullable metadata, NSError * _Nullable error))completion;
 @end
 NS_ASSUME_NONNULL_END

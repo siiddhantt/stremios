@@ -30,12 +30,126 @@ static NSString *MSAddonEncode(NSString *value) {
     return [value stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"]];
 }
 
+@interface MSAddonCatalogExtra ()
+@property(nonatomic, copy, readwrite) NSString *name;
+@property(nonatomic, readwrite) BOOL isRequired;
+@property(nonatomic, copy, readwrite) NSArray<NSString *> *options;
+@property(nonatomic, readwrite) NSUInteger optionsLimit;
+@end
+@implementation MSAddonCatalogExtra
+@end
+
+@interface MSAddonCatalog ()
+@property(nonatomic, copy, readwrite) NSString *connectionIdentifier, *addonName, *identifier, *type, *name;
+@property(nonatomic, copy, readwrite) NSArray<MSAddonCatalogExtra *> *extras;
+@end
+@implementation MSAddonCatalog
+- (NSString *)identity { return [NSString stringWithFormat:@"%@/%@/%@", self.connectionIdentifier, MSAddonEncode(self.type), MSAddonEncode(self.identifier)]; }
+- (MSAddonCatalogExtra *)extraNamed:(NSString *)name { for (MSAddonCatalogExtra *extra in self.extras) if ([extra.name isEqual:name]) return extra; return nil; }
+- (NSDictionary *)requestExtrasForValues:(NSDictionary *)values skip:(NSUInteger)skip error:(NSError **)error {
+    if ((values && ![values isKindOfClass:NSDictionary.class]) || values.count > 16 || skip > 100000) {
+        MSSetAddonError(error, 7, @"The catalog filters exceed the supported limit."); return nil;
+    }
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (id key in values) {
+        MSAddonCatalogExtra *extra = [key isKindOfClass:NSString.class] ? [self extraNamed:key] : nil;
+        id value = values[key];
+        if (!extra || [key isEqual:@"skip"] || ![value isKindOfClass:NSString.class] || [value length] > ([key isEqual:@"search"] ? 200 : 1024) || [value rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location != NSNotFound) {
+            MSSetAddonError(error, 7, @"A catalog filter is unsupported or invalid."); return nil;
+        }
+        if (![value length]) continue;
+        // This client offers one declared option per filter. Do not guess how a
+        // provider serializes multiple options or silently truncate its values.
+        if (extra.options.count && ![extra.options containsObject:value]) { MSSetAddonError(error, 7, @"Choose one of this catalog's available filter values."); return nil; }
+        result[key] = value;
+    }
+    MSAddonCatalogExtra *paging = [self extraNamed:@"skip"];
+    if (paging) {
+        NSString *cursor = [NSString stringWithFormat:@"%lu", (unsigned long)skip];
+        if (skip && paging.options.count && ![paging.options containsObject:cursor]) { MSSetAddonError(error,7,@"This catalog does not support that page offset."); return nil; }
+        result[@"skip"] = cursor;
+    }
+    else if (skip) { MSSetAddonError(error, 7, @"This catalog does not support more pages."); return nil; }
+    for (MSAddonCatalogExtra *extra in self.extras) if (extra.isRequired && ![result[extra.name] length]) {
+        MSSetAddonError(error, 7, @"Choose the required catalog filters before loading titles."); return nil;
+    }
+    return result;
+}
+@end
+
+static BOOL MSUUIDString(id value) { return MSStringWithin(value, 36) && [[NSUUID alloc] initWithUUIDString:value] != nil; }
+static BOOL MSManifestText(id value, NSUInteger limit) {
+    return MSStringWithin(value, limit) && [value rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location == NSNotFound;
+}
+static NSArray *MSCatalogDefinitions(id raw, NSError **error) {
+    if (!raw) return @[];
+    if (![raw isKindOfClass:NSArray.class] || [raw count] > 64) { MSSetAddonError(error, 2, @"The add-on has too many or invalid catalogs."); return nil; }
+    NSMutableArray *catalogs = [NSMutableArray array]; NSMutableSet *seen = [NSMutableSet set];
+    for (id entry in raw) {
+        if (![entry isKindOfClass:NSDictionary.class] || !MSPathName(entry[@"type"]) || !MSManifestText(entry[@"id"],256) || [entry[@"id"] containsString:@"://"] || (entry[@"name"] && !MSManifestText(entry[@"name"],160))) {
+            MSSetAddonError(error, 2, @"The add-on has an invalid catalog description."); return nil;
+        }
+        NSString *identity = [NSString stringWithFormat:@"%@/%@",entry[@"type"],MSAddonEncode(entry[@"id"])];
+        if ([seen containsObject:identity]) { MSSetAddonError(error,2,@"The add-on contains duplicate catalogs."); return nil; } [seen addObject:identity];
+        id extraInput = entry[@"extra"];
+        if (!extraInput) {
+            id supported = entry[@"extraSupported"], required = entry[@"extraRequired"];
+            if ((supported && !MSStringArray(supported,NO,YES)) || (required && !MSStringArray(required,NO,YES))) { MSSetAddonError(error,2,@"The catalog's legacy filters are invalid."); return nil; }
+            NSMutableArray *legacy = [NSMutableArray array];
+            NSMutableOrderedSet *names = [NSMutableOrderedSet orderedSetWithArray:supported ?: @[]]; [names addObjectsFromArray:required ?: @[]];
+            for (NSString *name in names) {
+                NSMutableDictionary *extra = [@{@"name":name,@"isRequired":@([required containsObject:name])} mutableCopy];
+                if ([name isEqual:@"genre"] && entry[@"genres"]) extra[@"options"] = entry[@"genres"];
+                [legacy addObject:extra];
+            } extraInput = legacy;
+        }
+        if (![extraInput isKindOfClass:NSArray.class] || [extraInput count] > 16) { MSSetAddonError(error,2,@"The catalog has too many or invalid filters."); return nil; }
+        NSMutableArray *extras = [NSMutableArray array]; NSMutableSet *extraNames = [NSMutableSet set];
+        for (id rawExtra in extraInput) {
+            if (![rawExtra isKindOfClass:NSDictionary.class] || !MSPathName(rawExtra[@"name"]) || [extraNames containsObject:rawExtra[@"name"]] ||
+                (rawExtra[@"isRequired"] && ![rawExtra[@"isRequired"] isKindOfClass:NSNumber.class])) { MSSetAddonError(error,2,@"The catalog has an invalid filter description."); return nil; }
+            id options = rawExtra[@"options"] ?: @[];
+            if (![options isKindOfClass:NSArray.class] || [options count] > 256) { MSSetAddonError(error,2,@"The catalog filter options exceed the supported limit."); return nil; }
+            NSMutableArray *cleanOptions = [NSMutableArray array];
+            for (id option in options) {
+                if (!MSManifestText(option,256)) { MSSetAddonError(error,2,@"The catalog contains an invalid filter option."); return nil; }
+                if ([rawExtra[@"name"] isEqual:@"skip"] && ([option length] > 6 || [option rangeOfCharacterFromSet:[NSCharacterSet characterSetWithCharactersInString:@"0123456789"].invertedSet].location != NSNotFound || [option integerValue] > 100000 || ![[NSString stringWithFormat:@"%ld",(long)[option integerValue]] isEqual:option])) { MSSetAddonError(error,2,@"The catalog page offsets are invalid."); return nil; }
+                if (![cleanOptions containsObject:option]) [cleanOptions addObject:option];
+            }
+            id limit = rawExtra[@"optionsLimit"];
+            if (limit && (![limit isKindOfClass:NSNumber.class] || [limit doubleValue] < 1 || [limit doubleValue] > 256 || [limit doubleValue] != [limit integerValue])) { MSSetAddonError(error,2,@"The catalog filter selection limit is invalid."); return nil; }
+            [extras addObject:@{@"name":rawExtra[@"name"],@"isRequired":@([rawExtra[@"isRequired"] boolValue]),@"options":cleanOptions,@"optionsLimit":limit ?: @1}];
+            [extraNames addObject:rawExtra[@"name"]];
+        }
+        [catalogs addObject:@{@"type":entry[@"type"],@"id":entry[@"id"],@"name":entry[@"name"] ?: entry[@"id"],@"extra":extras}];
+    }
+    return catalogs;
+}
+
+static NSArray *MSConfigurationFields(id raw) {
+    if (![raw isKindOfClass:NSArray.class]) return @[];
+    NSMutableArray *result = [NSMutableArray array];
+    for (id field in raw) {
+        if (result.count >= 32) break;
+        if (![field isKindOfClass:NSDictionary.class] || !MSManifestText(field[@"key"],80) || ![@[@"text",@"string",@"number",@"password",@"checkbox",@"boolean",@"select"] containsObject:field[@"type"]]) continue;
+        NSMutableDictionary *clean = [@{@"key":field[@"key"],@"type":field[@"type"],@"required":@([field[@"required"] respondsToSelector:@selector(boolValue)] && [field[@"required"] boolValue])} mutableCopy];
+        if (MSManifestText(field[@"title"],160)) clean[@"title"] = field[@"title"];
+        if ([field[@"options"] isKindOfClass:NSArray.class] && [field[@"options"] count] <= 128) {
+            NSMutableArray *options = [NSMutableArray array]; for (id option in field[@"options"]) if (MSManifestText(option,256)) [options addObject:option]; clean[@"options"] = options;
+        }
+        // Never retain configuration defaults: even a text field may contain a key.
+        [result addObject:clean];
+    } return result;
+}
+
 @interface MSAddon ()
 @property(nonatomic, copy, readwrite) NSString *identifier;
+@property(nonatomic, copy, readwrite) NSString *connectionIdentifier;
 @property(nonatomic, copy, readwrite) NSString *name;
 @property(nonatomic, strong, readwrite) NSURL *manifestURL;
 @property(nonatomic, readwrite) BOOL builtIn;
 @property(nonatomic, copy) NSDictionary *storedManifest;
+- (void)useConnectionIdentifier:(NSString *)identifier;
 @end
 
 @implementation MSAddon
@@ -72,12 +186,40 @@ static NSString *MSAddonEncode(NSString *value) {
         if (resource[@"idPrefixes"]) descriptor[@"idPrefixes"] = resource[@"idPrefixes"];
         [resources addObject:descriptor];
     }
-    NSMutableDictionary *stored = [@{@"id":manifest[@"id"], @"name":manifest[@"name"], @"types":manifest[@"types"], @"resources":resources} mutableCopy];
+    NSArray *catalogs = MSCatalogDefinitions(manifest[@"catalogs"], error); if (!catalogs) return nil;
+    NSMutableDictionary *stored = [@{@"id":manifest[@"id"], @"name":manifest[@"name"], @"types":manifest[@"types"], @"resources":resources, @"catalogs":catalogs} mutableCopy];
     if (globalPrefixes) stored[@"idPrefixes"] = globalPrefixes;
+    if (MSManifestText(manifest[@"version"],80)) stored[@"version"] = manifest[@"version"];
+    NSDictionary *hints = [manifest[@"behaviorHints"] isKindOfClass:NSDictionary.class] ? manifest[@"behaviorHints"] : @{};
+    stored[@"behaviorHints"] = @{@"configurable":@([hints[@"configurable"] respondsToSelector:@selector(boolValue)] && [hints[@"configurable"] boolValue]),@"configurationRequired":@([hints[@"configurationRequired"] respondsToSelector:@selector(boolValue)] && [hints[@"configurationRequired"] boolValue])};
+    stored[@"config"] = MSConfigurationFields(manifest[@"config"]);
     NSData *canonical = [NSJSONSerialization dataWithJSONObject:stored options:0 error:nil];
     MSAddon *addon = [MSAddon new]; addon.identifier = manifest[@"id"]; addon.name = manifest[@"name"]; addon.manifestURL = validatedURL;
     addon.storedManifest = [NSJSONSerialization JSONObjectWithData:canonical options:0 error:nil];
+    [addon useConnectionIdentifier:NSUUID.UUID.UUIDString];
     return addon;
+}
+- (void)useConnectionIdentifier:(NSString *)identifier { self.connectionIdentifier = identifier.uppercaseString; }
+- (NSString *)version { return self.storedManifest[@"version"] ?: @""; }
+- (BOOL)configurable { return [self.storedManifest[@"behaviorHints"][@"configurable"] boolValue] || self.configurationRequired; }
+- (BOOL)configurationRequired { return [self.storedManifest[@"behaviorHints"][@"configurationRequired"] boolValue]; }
+- (NSArray *)configurationFields { return self.storedManifest[@"config"] ?: @[]; }
+- (NSURL *)configureURL {
+    if (!self.configurable) return nil;
+    NSURLComponents *parts = [NSURLComponents componentsWithURL:self.manifestURL resolvingAgainstBaseURL:NO];
+    NSRange slash = [parts.percentEncodedPath rangeOfString:@"/" options:NSBackwardsSearch]; if (slash.location == NSNotFound) return nil;
+    parts.percentEncodedPath = [[parts.percentEncodedPath substringToIndex:slash.location] stringByAppendingString:@"/configure"]; return parts.URL;
+}
+- (NSArray<MSAddonCatalog *> *)catalogs {
+    NSMutableArray *catalogs = [NSMutableArray array];
+    for (NSDictionary *definition in self.storedManifest[@"catalogs"]) {
+        if (![self supportsResource:@"catalog" type:definition[@"type"] identifier:definition[@"id"]]) continue;
+        MSAddonCatalog *catalog = [MSAddonCatalog new]; catalog.connectionIdentifier = self.connectionIdentifier; catalog.addonName = self.name;
+        catalog.identifier = definition[@"id"]; catalog.type = definition[@"type"]; catalog.name = definition[@"name"];
+        NSMutableArray *extras = [NSMutableArray array];
+        for (NSDictionary *raw in definition[@"extra"]) { MSAddonCatalogExtra *extra = [MSAddonCatalogExtra new]; extra.name = raw[@"name"]; extra.isRequired = [raw[@"isRequired"] boolValue]; extra.options = raw[@"options"]; extra.optionsLimit = [raw[@"optionsLimit"] unsignedIntegerValue]; [extras addObject:extra]; }
+        catalog.extras = extras; [catalogs addObject:catalog];
+    } return catalogs;
 }
 - (BOOL)supportsResource:(NSString *)resource type:(NSString *)type identifier:(NSString *)identifier {
     if (!MSPathName(resource) || !MSPathName(type) || !MSStringWithin(identifier, 2048)) return NO;
@@ -124,12 +266,33 @@ static NSString *MSAddonEncode(NSString *value) {
 + (instancetype)sharedStore { static MSAddonStore *store; static dispatch_once_t once; dispatch_once(&once, ^{ store = [MSAddonStore new]; }); return store; }
 - (instancetype)init {
     if ((self = [super init])) {
-        MSAddon *cinemeta = [MSAddon addonWithManifest:@{@"id":@"com.linvo.cinemeta", @"name":@"Cinemeta", @"types":@[@"movie", @"series"], @"resources":@[@"catalog", @"meta"], @"idPrefixes":@[@"tt"]} URL:[NSURL URLWithString:@"https://v3-cinemeta.strem.io/manifest.json"] error:nil];
+        // Offline fallback descriptors from Cinemeta's public manifest. Other
+        // connections use their own validated manifest catalogs and options.
+        NSArray *genres = @[@"Action",@"Adventure",@"Animation",@"Biography",@"Comedy",@"Crime",@"Documentary",@"Drama",@"Family",@"Fantasy",@"History",@"Horror",@"Mystery",@"Romance",@"Sci-Fi",@"Sport",@"Thriller",@"War",@"Western"];
+        NSMutableArray *catalogs = [NSMutableArray array];
+        for (NSString *type in @[@"movie",@"series"]) {
+            NSArray *options = [type isEqual:@"series"] ? [genres arrayByAddingObjectsFromArray:@[@"Reality-TV",@"Talk-Show",@"Game-Show"]] : genres;
+            [catalogs addObject:@{@"id":@"top",@"type":type,@"name":@"Popular",@"extra":@[@{@"name":@"genre",@"options":options},@{@"name":@"search"},@{@"name":@"skip"}]}];
+            [catalogs addObject:@{@"id":@"imdbRating",@"type":type,@"name":@"Featured",@"extra":@[@{@"name":@"genre",@"options":options},@{@"name":@"skip"}]}];
+        }
+        MSAddon *cinemeta = [MSAddon addonWithManifest:@{@"id":@"com.linvo.cinemeta", @"name":@"Cinemeta", @"types":@[@"movie", @"series"], @"resources":@[@"catalog", @"meta"], @"idPrefixes":@[@"tt"], @"catalogs":catalogs} URL:[NSURL URLWithString:@"https://v3-cinemeta.strem.io/manifest.json"] error:nil];
         MSAddon *subtitles = [MSAddon addonWithManifest:@{@"id":@"org.stremio.opensubtitlesv3", @"name":@"OpenSubtitles v3", @"types":@[@"movie", @"series"], @"resources":@[@"subtitles"], @"idPrefixes":@[@"tt"]} URL:[NSURL URLWithString:@"https://opensubtitles-v3.strem.io/manifest.json"] error:nil];
+        [cinemeta useConnectionIdentifier:@"30B97DE2-D386-4F82-BB7B-0D57E7100001"];
+        [subtitles useConnectionIdentifier:@"30B97DE2-D386-4F82-BB7B-0D57E7100002"];
         cinemeta.builtIn = YES; subtitles.builtIn = YES; _builtIns = @[cinemeta, subtitles]; _addons = _builtIns;
         [self reloadWithError:nil];
     }
     return self;
+}
+- (NSArray<MSAddonCatalog *> *)allCatalogs {
+    NSMutableArray *catalogs = [NSMutableArray array];
+    for (MSAddon *addon in self.addons) if (!addon.configurationRequired) [catalogs addObjectsFromArray:addon.catalogs];
+    return catalogs;
+}
+- (MSAddon *)addonForConnectionIdentifier:(NSString *)identifier {
+    if (!MSUUIDString(identifier)) return nil;
+    for (MSAddon *addon in self.addons) if ([addon.connectionIdentifier caseInsensitiveCompare:identifier] == NSOrderedSame) return addon;
+    return nil;
 }
 - (NSURL *)storageDirectory {
 #ifdef MS_ADDON_STORE_TESTING
@@ -185,25 +348,38 @@ static NSString *MSAddonEncode(NSString *value) {
     } @catch (__unused NSException *exception) { data = nil; }
     @finally { [handle closeFile]; }
     id saved = data.length && data.length <= MSMaximumStoreBytes ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
-    if (![saved isKindOfClass:NSDictionary.class] || ![saved[@"version"] isEqual:@1] || ![saved[@"addons"] isKindOfClass:NSArray.class] || [saved[@"addons"] count] > MSMaximumCustomAddons) {
+    BOOL legacy = [saved isKindOfClass:NSDictionary.class] && [saved[@"version"] isEqual:@1];
+    if (![saved isKindOfClass:NSDictionary.class] || (!legacy && ![saved[@"version"] isEqual:@2]) || ![saved[@"addons"] isKindOfClass:NSArray.class] || [saved[@"addons"] count] > MSMaximumCustomAddons) {
         self.loadError = MSAddonError(3, @"Saved add-ons could not be decoded. They have not been replaced."); if (error) *error = self.loadError; return NO;
     }
-    NSMutableArray *addons = [self.builtIns mutableCopy];
+    NSMutableArray *addons = [self.builtIns mutableCopy]; NSMutableSet *identities = [NSMutableSet set];
+    for (MSAddon *addon in self.builtIns) [identities addObject:addon.connectionIdentifier];
     for (id entry in saved[@"addons"]) {
         MSAddon *addon = nil;
         if ([entry isKindOfClass:NSDictionary.class] && [entry[@"url"] isKindOfClass:NSString.class]) {
             NSURL *URL = [MSAddon manifestURLFromString:entry[@"url"] error:nil];
             if (URL) addon = [MSAddon addonWithManifest:entry[@"manifest"] URL:URL error:nil];
         }
-        if (!addon) { self.loadError = MSAddonError(3, @"A saved add-on is invalid. Saved entries have not been replaced."); if (error) *error = self.loadError; return NO; }
+        NSString *connection = legacy ? NSUUID.UUID.UUIDString : ([entry isKindOfClass:NSDictionary.class] ? entry[@"connectionIdentifier"] : nil);
+        if (!addon || !MSUUIDString(connection) || [identities containsObject:connection.uppercaseString]) { self.loadError = MSAddonError(3, @"A saved add-on is invalid. Saved entries have not been replaced."); if (error) *error = self.loadError; return NO; }
+        [addon useConnectionIdentifier:connection]; [identities addObject:addon.connectionIdentifier];
         [addons addObject:addon];
+    }
+    if (legacy) {
+        NSArray *custom = [addons subarrayWithRange:NSMakeRange(self.builtIns.count, addons.count - self.builtIns.count)];
+        NSError *migrationError = nil;
+        if (![self saveCustomAddons:custom error:&migrationError]) {
+            self.loadError = MSAddonError(3,@"Saved add-ons could not be upgraded in protected storage. Previous data was kept. Unlock this iPad and try again.");
+            if (error) *error = self.loadError; return NO;
+        }
+        return YES;
     }
     self.addons = addons; self.loadError = nil; return YES;
 }
 - (BOOL)saveCustomAddons:(NSArray<MSAddon *> *)custom error:(NSError **)error {
     NSMutableArray *entries = [NSMutableArray array];
-    for (MSAddon *addon in custom) [entries addObject:@{@"url":addon.manifestURL.absoluteString, @"manifest":addon.storedManifest}];
-    NSData *data = [NSJSONSerialization dataWithJSONObject:@{@"version":@1, @"addons":entries} options:0 error:nil];
+    for (MSAddon *addon in custom) [entries addObject:@{@"url":addon.manifestURL.absoluteString, @"manifest":addon.storedManifest,@"connectionIdentifier":addon.connectionIdentifier}];
+    NSData *data = [NSJSONSerialization dataWithJSONObject:@{@"version":@2, @"addons":entries} options:0 error:nil];
     if (!data || data.length > MSMaximumStoreBytes) return MSSetAddonError(error, 4, @"The add-on list exceeds the 512 KiB protected-storage limit.");
     if (![self prepareStorageDirectory]) return MSSetAddonError(error, 4, @"Protected app storage is unavailable. Unlock this iPad and try again. Nothing was changed.");
     NSURL *temporary = [[self storageDirectory] URLByAppendingPathComponent:[NSString stringWithFormat:@".addons-%@.tmp", NSUUID.UUID.UUIDString]];
@@ -237,6 +413,7 @@ static NSString *MSAddonEncode(NSString *value) {
 }
 - (BOOL)addManifest:(NSDictionary *)manifest URL:(NSURL *)URL error:(NSError **)error {
     MSAddon *addon = [MSAddon addonWithManifest:manifest URL:URL error:error]; if (!addon) return NO;
+    if (addon.configurationRequired) return MSSetAddonError(error,8,@"Configure this add-on first, then paste its completed manifest link.");
     if (![self reloadWithError:error]) return NO;
     NSMutableArray *custom = [NSMutableArray array];
     for (MSAddon *existing in self.addons) {
@@ -250,9 +427,11 @@ static NSString *MSAddonEncode(NSString *value) {
     if (existing.builtIn) return MSSetAddonError(error, 5, @"Built-in add-ons cannot be replaced.");
     MSAddon *replacement = [MSAddon addonWithManifest:manifest URL:URL error:error];
     if (!replacement || ![self reloadWithError:error]) return NO;
+    if (replacement.configurationRequired) return MSSetAddonError(error,8,@"Configure this add-on first, then paste its completed manifest link.");
     NSMutableArray *custom = [NSMutableArray array]; BOOL found = NO;
     for (MSAddon *entry in self.addons) {
         if ([entry.manifestURL.absoluteString isEqual:existing.manifestURL.absoluteString] && !entry.builtIn) {
+            [replacement useConnectionIdentifier:entry.connectionIdentifier];
             [custom addObject:replacement]; found = YES;
         } else {
             if ([entry.manifestURL.absoluteString isEqual:replacement.manifestURL.absoluteString]) return MSSetAddonError(error, 5, @"That connection is already installed.");

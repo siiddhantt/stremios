@@ -1,5 +1,6 @@
 #import "MSCatalogClient.h"
 #import "MSHTTPClient.h"
+#import "MSAddons.h"
 #import <math.h>
 static NSString *MSString(id value, NSUInteger limit) { return [value isKindOfClass:NSString.class] ? ([value length] > limit ? [value substringToIndex:limit] : value) : @""; }
 static NSString *MSIMDbRating(id value) {
@@ -27,10 +28,18 @@ static NSString *MSIMDbRating(id value) {
 @end
 @implementation MSMetadata
 + (instancetype)metadataWithDictionary:(NSDictionary *)raw fallbackType:(NSString *)type {
+    return [self metadataWithDictionary:raw fallbackType:type originConnectionIdentifier:nil];
+}
++ (instancetype)metadataWithDictionary:(NSDictionary *)raw fallbackType:(NSString *)type originConnectionIdentifier:(NSString *)connectionIdentifier {
     if (![raw isKindOfClass:NSDictionary.class]) return nil;
     NSString *identifier = [raw[@"id"] isKindOfClass:NSString.class] && [raw[@"id"] length] <= 1024 ? raw[@"id"] : @"", *title = MSString(raw[@"name"], 400);
     if (!identifier.length || !title.length) return nil;
     MSMetadata *item = [self new]; item->_identifier = identifier; item->_title = title;
+    NSDictionary *hints = [raw[@"behaviorHints"] isKindOfClass:NSDictionary.class] ? raw[@"behaviorHints"] : @{};
+    id videoID = hints[@"defaultVideoId"];
+    BOOL validVideoID = [videoID isKindOfClass:NSString.class] && [videoID length] > 0 && [videoID length] <= 1024 && [videoID rangeOfString:@"://"].location == NSNotFound && [videoID rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location == NSNotFound;
+    item->_defaultVideoIdentifier = validVideoID ? [videoID copy] : identifier;
+    if ([connectionIdentifier isKindOfClass:NSString.class] && connectionIdentifier.length == 36 && [[NSUUID alloc] initWithUUIDString:connectionIdentifier]) item->_originConnectionIdentifier = connectionIdentifier.uppercaseString;
     item->_type = [@[@"movie", @"series"] containsObject:raw[@"type"]] ? raw[@"type"] : type;
     item->_releaseInfo = MSString(raw[@"releaseInfo"], 80); item->_runtime = MSString(raw[@"runtime"], 80); item->_summary = MSString(raw[@"description"], 12000);
     item->_imdbRating = MSIMDbRating(raw[@"imdbRating"]);
@@ -52,30 +61,98 @@ static NSString *MSIMDbRating(id value) {
 @end
 @implementation MSCatalogPage
 @end
+
+@interface MSCatalogOperation : NSObject <MSCancellable>
+@property(atomic) BOOL cancelled;
+@property(nonatomic) BOOL finished;
+@property(nonatomic,strong) id<MSCancellable> request;
+@property(nonatomic,copy) void (^completion)(MSMetadata *,NSError *);
+@property(nonatomic,copy) NSArray<MSAddon *> *addons;
+@property(nonatomic,copy) NSString *type, *identifier;
+@property(nonatomic) NSUInteger index;
+@end
+@implementation MSCatalogOperation
+- (void)cancel { self.cancelled = YES; [self.request cancel]; self.request = nil; self.completion = nil; }
+- (void)finish:(MSMetadata *)metadata error:(NSError *)error {
+    if (self.finished || self.cancelled) return;
+    self.finished = YES; self.request = nil;
+    void (^completion)(MSMetadata *,NSError *) = self.completion; self.completion = nil;
+    if (completion) completion(metadata,error);
+}
+- (void)loadNext {
+    if (self.cancelled || self.finished) return;
+    if (self.index >= self.addons.count) { [self finish:nil error:MSNetworkError(@"The title's details are unavailable from compatible add-ons.")]; return; }
+    MSAddon *addon = self.addons[self.index++];
+    NSUInteger requestIndex = self.index;
+    NSURL *URL = [addon resourceURL:@"meta" type:self.type identifier:self.identifier extras:nil];
+    // The request retains this operation until it settles; cancellation clears
+    // the transport callback, and completion releases the request before return.
+    id<MSCancellable> request = [MSHTTPClient.sharedClient fetchJSONURL:URL completion:^(NSDictionary *document,NSError *error) {
+        if (self.cancelled || self.finished) return;
+        self.request = nil;
+        MSMetadata *metadata = error ? nil : [MSMetadata metadataWithDictionary:document[@"meta"] fallbackType:self.type originConnectionIdentifier:addon.connectionIdentifier];
+        if (metadata && [metadata.identifier isEqual:self.identifier] && [metadata.type isEqual:self.type]) [self finish:metadata error:nil];
+        else [self loadNext];
+    }];
+    if (!self.finished && !self.cancelled && self.index == requestIndex) self.request = request;
+}
+@end
+
+static id<MSCancellable> MSCatalogFailure(NSError *error, void (^completion)(id,NSError *)) {
+    MSCatalogOperation *operation = [MSCatalogOperation new];
+    dispatch_async(dispatch_get_main_queue(), ^{ if (!operation.cancelled) completion(nil,error); });
+    return operation;
+}
+
 @implementation MSCatalogClient
 + (instancetype)sharedClient { static MSCatalogClient *client; static dispatch_once_t once; dispatch_once(&once, ^{ client = [self new]; }); return client; }
 - (id<MSCancellable>)loadCatalogType:(NSString *)type search:(NSString *)search skip:(NSUInteger)skip completion:(void (^)(MSCatalogPage *, NSError *))completion {
     NSString *kind = [type isEqualToString:@"series"] ? @"series" : @"movie";
-    NSCharacterSet *safe = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"];
-    NSString *query = [MSString(search, 200) stringByAddingPercentEncodingWithAllowedCharacters:safe];
-    NSString *extra = query.length ? [NSString stringWithFormat:@"search=%@&skip=%lu", query, (unsigned long)skip] : [NSString stringWithFormat:@"skip=%lu", (unsigned long)skip];
-    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"https://v3-cinemeta.strem.io/catalog/%@/top/%@.json", kind, extra]];
+    for (MSAddon *addon in MSAddonStore.sharedStore.addons) if (addon.builtIn && [addon.identifier isEqual:@"com.linvo.cinemeta"]) {
+        for (MSAddonCatalog *catalog in addon.catalogs) if ([catalog.type isEqual:kind] && [catalog.identifier isEqual:@"top"])
+            return [self loadCatalog:catalog extras:search.length ? @{@"search":MSString(search,200)} : nil skip:skip completion:completion];
+    }
+    return MSCatalogFailure(MSNetworkError(@"The default catalog is unavailable."),completion);
+}
+- (id<MSCancellable>)loadCatalog:(MSAddonCatalog *)catalog extras:(NSDictionary *)extras skip:(NSUInteger)skip completion:(void (^)(MSCatalogPage *,NSError *))completion {
+    MSAddon *addon = [MSAddonStore.sharedStore addonForConnectionIdentifier:catalog.connectionIdentifier];
+    MSAddonCatalog *current = nil;
+    for (MSAddonCatalog *candidate in addon.catalogs) if ([candidate.identity isEqual:catalog.identity]) { current = candidate; break; }
+    if (!current || addon.configurationRequired || ![@[@"movie",@"series"] containsObject:current.type]) return MSCatalogFailure(MSNetworkError(@"This catalog connection is unavailable. Choose another catalog."),completion);
+    NSError *validation = nil; NSDictionary *requestExtras = [current requestExtrasForValues:extras skip:skip error:&validation];
+    if (!requestExtras) return MSCatalogFailure(validation,completion);
+    NSURL *url = [addon resourceURL:@"catalog" type:current.type identifier:current.identifier extras:requestExtras];
     return [[MSHTTPClient sharedClient] fetchJSONURL:url completion:^(NSDictionary *document, NSError *error) {
         if (error) { completion(nil,error); return; }
         NSArray *raw = [document[@"metas"] isKindOfClass:NSArray.class] ? document[@"metas"] : nil;
-        if (!raw) { completion(nil,MSNetworkError(@"The catalog response was incomplete.")); return; }
+        if (!raw || raw.count > 2000 || raw.count > 100000 - skip) { completion(nil,MSNetworkError(@"The catalog response was incomplete or exceeded the supported page size.")); return; }
         NSMutableArray *items = [NSMutableArray array];
-        for (id row in raw) { if(items.count >= 500) break; MSMetadata *item = [MSMetadata metadataWithDictionary:row fallbackType:kind]; if(item) [items addObject:item]; }
-        MSCatalogPage *page = [MSCatalogPage new]; page.items = items; page.receivedCount = raw.count; page.nextSkip = skip + raw.count; page.hasMore = raw.count > 0; completion(page,nil);
+        for (id row in raw) { if(items.count >= 500) break; MSMetadata *item = [MSMetadata metadataWithDictionary:row fallbackType:current.type originConnectionIdentifier:addon.connectionIdentifier]; if(item) [items addObject:item]; }
+        MSAddonCatalogExtra *paging = [current extraNamed:@"skip"];
+        NSUInteger nextSkip = skip + raw.count; BOOL hasMore = raw.count > 0 && paging != nil;
+        if (paging.options.count) {
+            NSUInteger next = NSUIntegerMax;
+            for (NSString *option in paging.options) { NSUInteger offset = option.integerValue; if (offset > skip && offset < next) next = offset; }
+            if (next == NSUIntegerMax) hasMore = NO; else nextSkip = next;
+        }
+        MSCatalogPage *page = [MSCatalogPage new]; page.items = items; page.receivedCount = raw.count; page.nextSkip = nextSkip; page.hasMore = hasMore; completion(page,nil);
     }];
 }
 - (id<MSCancellable>)loadMetadataType:(NSString *)type identifier:(NSString *)identifier completion:(void (^)(MSMetadata *, NSError *))completion {
-    NSString *kind = [type isEqualToString:@"series"] ? @"series" : @"movie";
-    NSCharacterSet *safe = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"];
-    NSString *escaped = [identifier stringByAddingPercentEncodingWithAllowedCharacters:safe];
-    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"https://v3-cinemeta.strem.io/meta/%@/%@.json", kind, escaped]];
-    return [[MSHTTPClient sharedClient] fetchJSONURL:url completion:^(NSDictionary *document, NSError *error) {
-        MSMetadata *item = [MSMetadata metadataWithDictionary:document[@"meta"] fallbackType:kind]; completion(item,error ?: (item ? nil : MSNetworkError(@"The title's details are unavailable.")));
-    }];
+    return [self loadMetadataType:type identifier:identifier preferredConnectionIdentifier:nil completion:completion];
+}
+- (id<MSCancellable>)loadMetadataType:(NSString *)type identifier:(NSString *)identifier preferredConnectionIdentifier:(NSString *)connectionIdentifier completion:(void (^)(MSMetadata *, NSError *))completion {
+    if (![@[@"movie",@"series"] containsObject:type] || ![identifier isKindOfClass:NSString.class] || !identifier.length || identifier.length > 1024)
+        return MSCatalogFailure(MSNetworkError(@"This title has an unsupported identifier or type."),completion);
+    MSAddonStore *store = MSAddonStore.sharedStore; MSAddon *preferred = [store addonForConnectionIdentifier:connectionIdentifier];
+    NSMutableArray *addons = [NSMutableArray array];
+    if (preferred && !preferred.configurationRequired && [preferred supportsResource:@"meta" type:type identifier:identifier]) [addons addObject:preferred];
+    for (MSAddon *addon in store.addons) {
+        if (addons.count >= 4) break;
+        if (addon != preferred && !addon.configurationRequired && [addon supportsResource:@"meta" type:type identifier:identifier]) [addons addObject:addon];
+    }
+    MSCatalogOperation *operation = [MSCatalogOperation new]; operation.addons = addons; operation.type = type; operation.identifier = identifier; operation.completion = completion;
+    if (NSThread.isMainThread) [operation loadNext]; else dispatch_async(dispatch_get_main_queue(), ^{ [operation loadNext]; });
+    return operation;
 }
 @end

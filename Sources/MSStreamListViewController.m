@@ -56,6 +56,7 @@ static NSString *const MSCompatibleFilterKey = @"MiniStream.sourceFilter.compati
 @interface MSStreamListViewController ()
 @property(nonatomic,strong) MSMetadata *metadata;
 @property(nonatomic,strong) MSEpisode *episode;
+@property(nonatomic,copy) NSString *movieVideoIdentifier;
 @property(nonatomic,strong) NSMutableArray<MSStream *> *streams;
 @property(nonatomic,copy) NSArray<MSStream *> *filteredStreams;
 @property(nonatomic,strong) NSMutableArray<id<MSCancellable>> *requests;
@@ -78,8 +79,12 @@ static NSString *const MSCompatibleFilterKey = @"MiniStream.sourceFilter.compati
 @end
 @implementation MSStreamListViewController
 - (instancetype)initWithMetadata:(MSMetadata *)metadata episode:(MSEpisode *)episode {
+    return [self initWithMetadata:metadata episode:episode videoIdentifier:nil];
+}
+- (instancetype)initWithMetadata:(MSMetadata *)metadata episode:(MSEpisode *)episode videoIdentifier:(NSString *)videoIdentifier {
     if ((self = [super initWithStyle:UITableViewStyleGrouped])) {
-        _metadata = metadata; _episode = episode; _streams = [NSMutableArray array]; _filteredStreams = @[]; _requests = [NSMutableArray array]; self.title = @"Sources";
+        _metadata = metadata; _episode = episode;
+        if (!episode && [metadata.type isEqual:@"movie"] && [videoIdentifier isKindOfClass:NSString.class] && videoIdentifier.length > 0 && videoIdentifier.length <= 1024 && ![videoIdentifier containsString:@"://"] && [videoIdentifier rangeOfCharacterFromSet:NSCharacterSet.controlCharacterSet].location == NSNotFound) _movieVideoIdentifier = [videoIdentifier copy]; _streams = [NSMutableArray array]; _filteredStreams = @[]; _requests = [NSMutableArray array]; self.title = @"Sources";
         [NSUserDefaults.standardUserDefaults registerDefaults:@{MSCompatibleFilterKey:@YES}];
         id provider = [NSUserDefaults.standardUserDefaults objectForKey:MSProviderFilterKey], resolution = [NSUserDefaults.standardUserDefaults objectForKey:MSResolutionFilterKey];
         _providerFilter = [provider isKindOfClass:NSString.class] && [provider length] <= 200 ? provider : @"";
@@ -131,7 +136,7 @@ static NSString *const MSCompatibleFilterKey = @"MiniStream.sourceFilter.compati
 - (void)active:(NSNotification *)note { if (self.visible && (!self.loaded || self.needsReload)) [self loadSources]; }
 - (void)addonsChanged:(NSNotification *)note { self.needsReload = YES; if (self.visible) [self loadSources]; }
 - (void)openAddons { [self.navigationController pushViewController:[MSAddonsViewController new] animated:YES]; }
-- (NSString *)videoIdentifier { return self.episode.identifier ?: self.metadata.identifier; }
+- (NSString *)videoIdentifier { return self.episode.identifier ?: self.movieVideoIdentifier ?: self.metadata.defaultVideoIdentifier; }
 - (void)requestResumeFromLastSource {
     if (self.openingSource || self.presentedViewController) return;
     self.exactResumePending = YES; self.exactResumeFingerprint = [self.savedFingerprint copy]; self.exactResumeVideoID = [self.videoIdentifier copy]; self.resumeNotice = nil; self.needsReload = YES;
@@ -246,6 +251,7 @@ static NSString *const MSCompatibleFilterKey = @"MiniStream.sourceFilter.compati
 - (NSDictionary *)libraryMetadata {
     NSMutableDictionary *record = [@{@"metadataID":self.metadata.identifier,@"type":self.metadata.type,@"title":self.metadata.title,@"releaseInfo":self.metadata.releaseInfo ?: @""} mutableCopy];
     if (self.metadata.posterURL) record[@"posterURL"] = self.metadata.posterURL.absoluteString;
+    if (self.metadata.originConnectionIdentifier) record[@"originConnectionIdentifier"] = self.metadata.originConnectionIdentifier;
     if (self.episode) { record[@"episodeTitle"] = self.episode.title; record[@"season"] = @(self.episode.season); record[@"episode"] = @(self.episode.episode); }
     return record;
 }

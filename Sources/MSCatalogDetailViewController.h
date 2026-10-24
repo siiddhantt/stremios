@@ -7,6 +7,8 @@ NS_ASSUME_NONNULL_BEGIN
 // True only during selection from the explicit Resume button. Episode rows
 // remain ordinary source selection; neither path resolves media in this view.
 @property(nonatomic,readonly) BOOL resumeRequested;
+// Exact saved movie/episode identity selected for source lookup.
+@property(nonatomic,copy,readonly) NSString *currentVideoIdentifier;
 - (instancetype)initWithMetadata:(MSMetadata *)metadata catalogClient:(MSCatalogClient *)client videoSelection:(nullable MSVideoSelection)selection;
 @end
 NS_ASSUME_NONNULL_END

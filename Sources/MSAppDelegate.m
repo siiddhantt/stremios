@@ -27,8 +27,9 @@
     __block __weak UITabBarController *weakTabs;
     MSVideoSelection selection = ^(MSMetadata *metadata, MSEpisode *episode) {
         UINavigationController *navigation = (UINavigationController *)weakTabs.selectedViewController;
-        MSStreamListViewController *sources=[[MSStreamListViewController alloc] initWithMetadata:metadata episode:episode];
-        if ([navigation.topViewController isKindOfClass:MSCatalogDetailViewController.class] && [(MSCatalogDetailViewController *)navigation.topViewController resumeRequested]) [sources requestResumeFromLastSource];
+        MSCatalogDetailViewController *detail = [navigation.topViewController isKindOfClass:MSCatalogDetailViewController.class] ? (id)navigation.topViewController : nil;
+        MSStreamListViewController *sources=[[MSStreamListViewController alloc] initWithMetadata:metadata episode:episode videoIdentifier:detail.currentVideoIdentifier];
+        if (detail.resumeRequested) [sources requestResumeFromLastSource];
         [navigation pushViewController:sources animated:YES];
     };
     MSCatalogViewController *browse = [[MSCatalogViewController alloc] initWithCatalogClient:MSCatalogClient.sharedClient demoCatalog:catalog videoSelection:selection];

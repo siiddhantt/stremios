@@ -75,6 +75,8 @@ static NSMutableDictionary *MSLibraryRecord(id raw, NSString *identifier) {
         @"position":@(MSLibraryNumber(raw[@"position"], MSMaximumDuration)), @"duration":@(MSLibraryNumber(raw[@"duration"], MSMaximumDuration)),
         @"lastPlayedAt":@(MSLibraryNumber(raw[@"lastPlayedAt"], 1e12)), @"updatedAt":@(MSLibraryNumber(raw[@"updatedAt"], 1e12)),
         @"favorite":@([raw[@"favorite"] isKindOfClass:NSNumber.class] && [raw[@"favorite"] boolValue])} mutableCopy];
+    id origin = raw[@"originConnectionIdentifier"];
+    if ([origin isKindOfClass:NSString.class] && [origin length] == 36 && [[NSUUID alloc] initWithUUIDString:origin]) record[@"originConnectionIdentifier"] = [origin uppercaseString];
     for (NSString *key in @[@"releaseInfo", @"episodeTitle"]) { NSString *text = MSLibraryText(raw[key], [key isEqualToString:@"releaseInfo"] ? 80 : 300); if (text.length) record[key] = text; }
     for (NSString *key in @[@"season", @"episode"]) if ([raw[key] isKindOfClass:NSNumber.class]) record[key] = @((NSInteger)MSLibraryNumber(raw[key], 100000));
     NSString *poster = MSLibraryPoster(raw[@"posterURL"]); if (poster.length) record[@"posterURL"] = poster;
@@ -154,7 +156,7 @@ static NSMutableDictionary *MSLibraryRecord(id raw, NSString *identifier) {
     if (!MSLibraryID(identifier).length || ![metadata isKindOfClass:NSDictionary.class]) return;
     NSMutableDictionary *records = [self records]; if (!records) return;
     NSMutableDictionary *record = [records[identifier] mutableCopy] ?: MSLibraryRecord(@{}, identifier);
-    for (NSString *key in @[@"metadataID", @"type", @"title", @"posterURL", @"releaseInfo", @"episodeTitle", @"season", @"episode"]) if (metadata[key]) record[key] = metadata[key];
+    for (NSString *key in @[@"metadataID", @"type", @"title", @"posterURL", @"releaseInfo", @"episodeTitle", @"season", @"episode", @"originConnectionIdentifier"]) if (metadata[key]) record[key] = metadata[key];
     NSMutableDictionary *clean = MSLibraryRecord(record, identifier);
     if ([records[identifier] isEqual:clean]) return;
     clean[@"updatedAt"] = @(NSDate.date.timeIntervalSince1970); records[identifier] = clean; [self writeRecords:records notify:YES];

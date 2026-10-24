@@ -156,13 +156,14 @@
     if (!candidate) return;
     NSString *identifier = candidate[@"videoID"]; [self.metadataAttempts addObject:identifier];
     NSUInteger generation = self.metadataGeneration; __weak typeof(self) weakSelf = self;
-    self.metadataRequest = [MSCatalogClient.sharedClient loadMetadataType:candidate[@"type"] identifier:candidate[@"metadataID"] completion:^(MSMetadata *metadata, NSError *error) {
+    self.metadataRequest = [MSCatalogClient.sharedClient loadMetadataType:candidate[@"type"] identifier:candidate[@"metadataID"] preferredConnectionIdentifier:candidate[@"originConnectionIdentifier"] completion:^(MSMetadata *metadata, NSError *error) {
         (void)error; typeof(self) self = weakSelf; if (!self || !self.visible || generation != self.metadataGeneration) return;
         self.metadataRequest = nil;
         NSDictionary *current = [MSLibraryStore.sharedStore recordForIdentifier:identifier];
         if (metadata && [current[@"title"] isEqualToString:@"Saved playback"]) {
             NSMutableDictionary *fields = [@{@"metadataID":metadata.identifier, @"type":metadata.type, @"title":metadata.title, @"releaseInfo":metadata.releaseInfo} mutableCopy];
             if (metadata.posterURL) fields[@"posterURL"] = metadata.posterURL.absoluteString;
+            if (metadata.originConnectionIdentifier) fields[@"originConnectionIdentifier"] = metadata.originConnectionIdentifier;
             for (MSEpisode *episode in metadata.episodes) if ([episode.identifier isEqualToString:identifier]) {
                 fields[@"episodeTitle"] = episode.title; fields[@"season"] = @(episode.season); fields[@"episode"] = @(episode.episode); break;
             }
@@ -197,7 +198,7 @@
     [collectionView deselectItemAtIndexPath:indexPath animated:NO]; NSDictionary *record = self.visibleRecords[indexPath.item];
     NSMutableDictionary *raw = [@{@"id":record[@"metadataID"], @"name":record[@"title"], @"type":record[@"type"]} mutableCopy];
     if (record[@"posterURL"]) raw[@"poster"] = record[@"posterURL"]; if (record[@"releaseInfo"]) raw[@"releaseInfo"] = record[@"releaseInfo"];
-    MSMetadata *metadata = [MSMetadata metadataWithDictionary:raw fallbackType:record[@"type"]]; if (!metadata) return;
+    MSMetadata *metadata = [MSMetadata metadataWithDictionary:raw fallbackType:record[@"type"] originConnectionIdentifier:record[@"originConnectionIdentifier"]]; if (!metadata) return;
     MSCatalogDetailViewController *detail = [[MSCatalogDetailViewController alloc] initWithMetadata:metadata catalogClient:MSCatalogClient.sharedClient videoSelection:self.videoSelection];
     detail.preferredVideoIdentifier = record[@"videoID"];
     [self.navigationController pushViewController:detail animated:YES];
