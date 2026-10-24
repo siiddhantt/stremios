@@ -11,7 +11,8 @@ const entries = [
   ['close','chevron-down'], ['view','aspect-ratio'], ['audio','volume'],
   ['cc','badge-cc'], ['fullscreen','maximize'], ['fullscreen-exit','minimize'],
   ['play','player-play'], ['pause','player-pause'],
-  ['back','rewind-backward-15'], ['forward','rewind-forward-15']
+  ['back','rewind-backward-15'], ['forward','rewind-forward-15'],
+  ['movies','movie'], ['series','device-tv'], ['filters','adjustments-horizontal']
 ];
 const sha = data => crypto.createHash('sha256').update(data).digest('hex');
 (async () => {

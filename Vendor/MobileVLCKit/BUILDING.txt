@@ -1,4 +1,4 @@
-MiniStream playback dependency: MobileVLCKit 3.7.4
+StremIOS playback dependency: MobileVLCKit 3.7.4
 
 This directory contains provenance, a fetch recipe and the unchanged LGPL 2.1
 license. It contains no compiled framework. The app dynamically links VideoLAN's
@@ -65,7 +65,7 @@ VLC base source commit selected by that build script:
 https://github.com/videolan/vlc/tree/6de05adcbaf2e8b85fe86aad4169393098628119
 
 Apply all 42 patches from the pinned VLCKit libvlc/patches directory in lexical
-order. They are part of this source recipe, not MiniStream modifications. The
+order. They are part of this source recipe, not StremIOS modifications. The
 official buildMobileVLCKit.sh performs the checkout and git-am steps. The pinned
 .gitlab-ci.yml uses buildMobileVLCKit.sh -vf3 and
 Packaging/create-distributable-package.sh -vm for the device/simulator archive.
@@ -94,7 +94,7 @@ Copyright belongs to VideoLAN and the respective VLCKit/libVLC contributors.
 VLCKit and libVLC are supplied under LGPL version 2.1 or, where stated in the
 source, later versions. See COPYING.LGPL-2.1.txt and the upstream source notices;
 individual bundled dependencies retain their own licenses. The official script
-configures a non-GPL contribution build. MiniStream does not modify VLCKit code;
+configures a non-GPL contribution build. StremIOS does not modify VLCKit code;
 it extracts an existing architecture slice and signs it for this installation.
 
 Keep the upstream notices/license and source references with any redistributed

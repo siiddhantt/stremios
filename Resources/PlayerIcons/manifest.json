@@ -13,7 +13,7 @@
     "rsvg": "2.63.2",
     "vips": "8.18.7"
   },
-  "totalRasterBytes": 12400,
+  "totalRasterBytes": 15517,
   "icons": [
     {
       "name": "close",
@@ -332,6 +332,102 @@
           "height": 72,
           "bytes": 774,
           "sha256": "8cf13abaf095973d9fcada5a24ac81332ed1f7461aa6a266834b263910a4a6df"
+        }
+      ]
+    },
+    {
+      "name": "movies",
+      "upstream": "movie",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/movie.svg",
+      "svgSHA256": "c060349bd89cf44c1542de982d06c61f81240868a336eb5ce670d048f564554f",
+      "pngs": [
+        {
+          "filename": "movies.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 203,
+          "sha256": "cf740201449478247aabb377320147234e387238ae1887deece78d35a01d2e22"
+        },
+        {
+          "filename": "movies@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 331,
+          "sha256": "06cf17793a04c8defa1a04c1637e954f6ac28c58adb238715d11630b2bb27a9f"
+        },
+        {
+          "filename": "movies@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 439,
+          "sha256": "031cba68ae79fa1c3f26f9edc07591caa7812b9ad17e8be25c889c6151d87c09"
+        }
+      ]
+    },
+    {
+      "name": "series",
+      "upstream": "device-tv",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/device-tv.svg",
+      "svgSHA256": "e0bd48b49471d717666a473295a524493c1622c5746e357192a46f830548e6ee",
+      "pngs": [
+        {
+          "filename": "series.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 233,
+          "sha256": "225aa1a1d8605c51d9dce2d1d2e634658ecfb99601df316ed680bff3cba2be10"
+        },
+        {
+          "filename": "series@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 390,
+          "sha256": "cda69a1f0d9c63fc60a2ba4c6899a782f169f7660764a6c52a0d9033b9da35f1"
+        },
+        {
+          "filename": "series@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 501,
+          "sha256": "bbc9a37a01ecbbc92ae3a54cb4bdcd24cb0ba66e7987103303f2c313aea47a43"
+        }
+      ]
+    },
+    {
+      "name": "filters",
+      "upstream": "adjustments-horizontal",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/adjustments-horizontal.svg",
+      "svgSHA256": "51c876babc598cf69ad1146f0fb621919a975758df0cc7abf45052006358a353",
+      "pngs": [
+        {
+          "filename": "filters.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 202,
+          "sha256": "82ce2663e435f66adaa7b152cf7f0f52149e32b45f5740be961a4c553f754493"
+        },
+        {
+          "filename": "filters@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 350,
+          "sha256": "34422e7ea78935b83bca6c0aa835dd2c0b3b7a71e8cc8e7f3830d13c29e474ed"
+        },
+        {
+          "filename": "filters@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 468,
+          "sha256": "9dbb642c54a0388f5ee1b3b86b9bc7327fa042b9de9489e243c486b72de8cbd3"
         }
       ]
     }

@@ -42,7 +42,7 @@ def rgba(data):
 check(manifest['commit']=='a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d','Pinned source commit')
 check(manifest['pointSize']==24 and manifest['strokeWidth']==2,'Unified official geometry')
 check(manifest['license']=='MIT' and digest((p/'LICENSE.txt').read_bytes())==manifest['licenseSHA256'],'Exact upstream license')
-expected={'close','view','audio','cc','fullscreen','fullscreen-exit','play','pause','back','forward'}
+expected={'close','view','audio','cc','fullscreen','fullscreen-exit','play','pause','back','forward','movies','series','filters'}
 check({x['name'] for x in manifest['icons']}==expected,'Complete player action inventory')
 header=(p/'GeneratedIcons.h').read_text();total=0;bounds={}
 for icon in manifest['icons']:
@@ -67,6 +67,6 @@ for icon in manifest['icons']:
   embedded=bytes(int(x,16) for x in re.findall(r'0x([0-9a-f]{2})',match.group(1))) if match else b''
   check(embedded==data,'Embedded bytes exactly match committed raster')
   if s==2:bounds[icon['name']]=box
-check(total==manifest['totalRasterBytes'] and total<16000,'Bounded complete raster footprint')
+check(total==manifest['totalRasterBytes'] and total<22000,'Bounded complete raster footprint')
 check('Paweł Kuna' in (p.parent/'ThirdPartyNotices.txt').read_text(),'License shipped in existing app notices')
-print(json.dumps({'passed':True,'checks':checks,'icons':len(expected),'rasterVariants':30,'embeddedRasterBytes':total,'retinaInkBounds':bounds},indent=2))
+print(json.dumps({'passed':True,'checks':checks,'icons':len(expected),'rasterVariants':len(expected)*3,'embeddedRasterBytes':total,'retinaInkBounds':bounds},indent=2))

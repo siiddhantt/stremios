@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Offline, reduced protocol examples for a future importer. The first MiniStream slice does not implement Stremio add-ons or consume these fixtures.",
+  "purpose": "Reduced, synthetic Stremio protocol examples for offline validation.",
   "not_runtime_test_evidence": true,
   "fixtures": [
     {
@@ -80,7 +80,7 @@
     "duration_seconds": 596.48,
     "endpoint_checked_at": "2026-10-24",
     "evidence_scope": "Bounded HTTPS range requests returned HTTP 206 for the beginning and metadata tail. MP4 headers identify a 596.48-second H.264 Main Level 3.0 video at 853 by 480 pixels and AAC-LC 48 kHz audio. Separate tests using the production player on the iPad mini 2 passed initial playback, pause, seeking, and close/resume; this offline fixture is not the runtime evidence.",
-    "attribution": "Big Buck Bunny © 2008 Blender Foundation / www.bigbuckbunny.org. CC BY 3.0. Preserve the full end credits for full-movie screening.",
+    "attribution": "Big Buck Bunny \u00a9 2008 Blender Foundation / www.bigbuckbunny.org. CC BY 3.0. Preserve the full end credits for full-movie screening.",
     "codec_families": [
       "H.264",
       "AAC"

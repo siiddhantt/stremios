@@ -62,7 +62,7 @@ MobileVLCKit 3.7.4 / libVLC 3.0.24
 Copyright VideoLAN and the respective VLCKit/libVLC contributors.
 Licensed under GNU LGPL version 2.1 or later, as specified by the upstream
 source files. Bundled dependencies retain their respective upstream licenses.
-MiniStream dynamically links the official framework, without source changes.
+StremIOS dynamically links the official framework, without source changes.
 The framework was reduced to its existing arm64 slice and signed for this app.
 
 Project and source:
@@ -73,7 +73,7 @@ https://github.com/videolan/vlc/tree/6de05adcbaf2e8b85fe86aad4169393098628119
 The pinned VLCKit source includes 42 patches to the pinned VLC base, plus build
 scripts and dependency source recipes. The observed libVLC binary changeset is
 3.0.24-42-gcdceca9c6f. Exact binary/source archive hashes, reproducible dependency
-fetching and source/rebuild instructions accompany MiniStream's source in
+fetching and source/rebuild instructions accompany StremIOS's source in
 Vendor/MobileVLCKit. No byte-for-byte rebuild claim is made.
 
 Recipients retain their LGPL rights to modify/replace this library and to

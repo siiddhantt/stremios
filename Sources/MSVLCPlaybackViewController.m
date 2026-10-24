@@ -272,7 +272,7 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
 - (void)beginPlayback {
     if (self.closing || self.player || self.mediaServicesUnavailable || UIApplication.sharedApplication.applicationState != UIApplicationStateActive) return;
     if(self.waitingForStop) { self.restartAfterStop=YES; self.statusPanel.hidden=NO; self.statusLabel.text=@"Stopping the previous video…"; self.retryButton.hidden=YES; return; }
-    if(MSVLCRetirement.pendingCount>=2) { [self fail:@"A previous video has not stopped. Close MiniStream from the app switcher before trying again." code:5]; return; }
+    if(MSVLCRetirement.pendingCount>=2) { [self fail:@"A previous video has not stopped. Close StremIOS from the app switcher before trying again." code:5]; return; }
     self.generation++; self.ready=NO; self.seekPending=NO; self.sourceSaved=NO; self.restoredAudio=NO; self.retryFromBeginning=NO; self.interrupted=NO; self.lastEngineState=-1;
     self.knownAudioTracks=@[]; self.knownSubtitleTracks=@[]; self.lastObservedTime=0; self.lastAdvanceTime=NSProcessInfo.processInfo.systemUptime; self.lastPersistedAt=0; self.lastDiagnosticAt=0;
     self.statusPanel.hidden=NO; self.statusLabel.text=@"Loading…"; self.retryButton.hidden=YES; self.nextButton.hidden=YES; [self setControlsVisible:YES];

@@ -1,6 +1,41 @@
 #import "MSCatalogPickerViewController.h"
 #import "MSTheme.h"
 
+@interface MSOutsideDismissNavigationController () <UIGestureRecognizerDelegate>
+@property(nonatomic,strong) UITapGestureRecognizer *outsideDismissTap;
+@property(nonatomic,weak) UIView *outsideDismissContainer;
+@property(nonatomic) BOOL outsideDismissPending;
+@end
+@implementation MSOutsideDismissNavigationController
+- (void)removeOutsideDismissGesture {
+    [self.outsideDismissTap.view removeGestureRecognizer:self.outsideDismissTap];
+    self.outsideDismissTap.delegate=nil;self.outsideDismissTap=nil;self.outsideDismissContainer=nil;
+}
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];[self removeOutsideDismissGesture];self.outsideDismissPending=NO;
+    UIView *container=self.presentationController.containerView;
+    if(!container||!self.presentingViewController)return;
+    UITapGestureRecognizer *tap=[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(outsideTapped:)];
+    tap.delegate=self;tap.cancelsTouchesInView=YES;tap.delaysTouchesBegan=YES;
+    self.outsideDismissTap=tap;self.outsideDismissContainer=container;[container addGestureRecognizer:tap];
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gesture shouldReceiveTouch:(UITouch *)touch {
+    if(gesture!=self.outsideDismissTap||self.outsideDismissPending||self.isBeingDismissed||self.presentedViewController||!self.view.window)return NO;
+    UIView *container=self.outsideDismissContainer;
+    if(!container||touch.window!=self.view.window||![touch.view isDescendantOfView:container])return NO;
+    // Test the whole navigation sheet, including its bar and pushed filter
+    // screens. Inside taps and scrolling never enter this recognizer.
+    return !CGRectContainsPoint(self.view.bounds,[touch locationInView:self.view]);
+}
+- (void)outsideTapped:(UITapGestureRecognizer *)gesture {
+    if(gesture.state!=UIGestureRecognizerStateRecognized||self.outsideDismissPending||self.isBeingDismissed||self.presentedViewController)return;
+    self.outsideDismissPending=YES;
+    [self dismissViewControllerAnimated:YES completion:^{[self removeOutsideDismissGesture];}];
+}
+- (void)viewDidDisappear:(BOOL)animated { [super viewDidDisappear:animated];[self removeOutsideDismissGesture]; }
+- (void)dealloc { [_outsideDismissTap.view removeGestureRecognizer:_outsideDismissTap]; }
+@end
+
 NSString *MSCatalogFilterTitle(MSAddonCatalog *catalog, MSAddonCatalogExtra *extra) {
     if ([extra.name isEqualToString:@"genre"]) {
         if ([catalog.identifier isEqualToString:@"tmdb.language"]) return @"Language";

@@ -39,7 +39,7 @@ static unsigned long long MSFolderBytes(NSURL *root) {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section { return section==0?2:section==1?3:1; }
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section { return @[@"On this iPad",@"Artwork cache",@""][section]; }
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section==0) return @"File sizes inside MiniStream. App data includes the cache below.";
+    if (section==0) return @"File sizes inside StremIOS. App data includes the cache below.";
     if (section==1) return @"Posters and artwork are kept for up to 30 days. Videos are not cached.";
     return nil;
 }

@@ -19,7 +19,7 @@ mkdir -p "$build_dir"
 build_dir=$(CDPATH= cd -- "$build_dir" && pwd)
 # A unique staging directory prevents stale files being included on rebuilds.
 stage_dir=$(mktemp -d "$build_dir/stage.XXXXXX")
-app_dir="$stage_dir/Payload/MiniStream.app"
+app_dir="$stage_dir/Payload/StremIOS.app"
 mkdir -p "$app_dir" "$stage_dir/objects" "$build_dir/module-cache"
 printf 'Build directory: %s\n' "$build_dir"
 
@@ -46,7 +46,7 @@ xcrun --sdk iphoneos clang \
     -framework AVKit -framework Security -framework CoreGraphics -framework QuartzCore \
     -framework CoreMedia -framework ImageIO \
     -F "$vlc_parent" -framework MobileVLCKit -Wl,-rpath,@executable_path/Frameworks \
-    -o "$app_dir/MiniStream"
+    -o "$app_dir/StremIOS"
 
 cp "$project_dir/Resources/Info.plist" "$app_dir/Info.plist"
 # The licensed demo remains a test fixture, outside the production payload.
@@ -93,9 +93,9 @@ plutil -lint "$app_dir/Info.plist"
 codesign --force --sign - --timestamp=none "$app_dir"
 codesign --verify --deep --strict "$app_dir"
 
-architectures=$(xcrun lipo -archs "$app_dir/MiniStream")
+architectures=$(xcrun lipo -archs "$app_dir/StremIOS")
 [ "$architectures" = arm64 ] || { printf 'Unexpected architectures: %s\n' "$architectures" >&2; exit 1; }
-xcrun otool -l "$app_dir/MiniStream" > "$stage_dir/load-commands.txt"
+xcrun otool -l "$app_dir/StremIOS" > "$stage_dir/load-commands.txt"
 if awk '$1 == "cmd" && $2 == "LC_DYLD_CHAINED_FIXUPS" { found = 1 } END { exit !found }' "$stage_dir/load-commands.txt"; then
     printf 'The binary uses chained fixups that are unsuitable for iOS 12. Inspect the selected linker/toolchain before installing.\n' >&2
     exit 1
@@ -107,7 +107,7 @@ minimum_os=$(awk '
 case "$minimum_os" in 12.0|12.0.0) ;; *) printf 'Unexpected minimum OS: %s\n' "$minimum_os" >&2; exit 1;; esac
 plist_minimum=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$app_dir/Info.plist")
 [ "$plist_minimum" = 12.0 ] || { printf 'Info.plist minimum OS differs: %s\n' "$plist_minimum" >&2; exit 1; }
-xcrun otool -L "$app_dir/MiniStream" > "$stage_dir/dependencies.txt"
+xcrun otool -L "$app_dir/StremIOS" > "$stage_dir/dependencies.txt"
 awk 'NR > 1 { print $1 }' "$stage_dir/dependencies.txt" | while IFS= read -r dependency; do
     case "$dependency" in
         /System/Library/Frameworks/*|/usr/lib/*|@rpath/MobileVLCKit.framework/MobileVLCKit) ;;
@@ -120,10 +120,10 @@ if [ -s "$stage_dir/entitlements.plist" ]; then
     exit 1
 fi
 
-ipa_path="$build_dir/MiniStream-iOS12.ipa"
-ditto -c -k --norsrc --noextattr --keepParent "$stage_dir/Payload" "$stage_dir/MiniStream-iOS12.ipa"
-mv -f "$stage_dir/MiniStream-iOS12.ipa" "$ipa_path"
-shasum -a 256 "$ipa_path" > "$build_dir/MiniStream-iOS12.ipa.sha256"
+ipa_path="$build_dir/StremIOS-iOS12.ipa"
+ditto -c -k --norsrc --noextattr --keepParent "$stage_dir/Payload" "$stage_dir/StremIOS-iOS12.ipa"
+mv -f "$stage_dir/StremIOS-iOS12.ipa" "$ipa_path"
+shasum -a 256 "$ipa_path" > "$build_dir/StremIOS-iOS12.ipa.sha256"
 printf '\nBuilt: %s\nAudit: arm64, minimum iOS %s, pinned VideoLAN framework + Apple dependencies, no entitlements.\n' "$ipa_path" "$minimum_os"
 printf 'Launch mode: %s\n' "$launch_mode"
 printf 'Audit files and app bundle: %s\n' "$stage_dir"

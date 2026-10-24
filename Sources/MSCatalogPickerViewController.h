@@ -3,6 +3,10 @@
 NS_ASSUME_NONNULL_BEGIN
 // Presentation names only; request keys and values remain exactly as declared.
 NSString *MSCatalogFilterTitle(MSAddonCatalog *catalog, MSAddonCatalogExtra *extra);
+// Form-sheet navigation with an outside-only dismissal gesture. Dismissing
+// does not invoke the content controller's explicit Apply/selection callbacks.
+@interface MSOutsideDismissNavigationController : UINavigationController
+@end
 @interface MSCatalogPickerViewController : MSSettingsTableController
 - (instancetype)initWithCatalogs:(NSArray<MSAddonCatalog *> *)catalogs selectedIdentity:(nullable NSString *)identity selection:(void (^)(MSAddonCatalog *catalog))selection;
 @end

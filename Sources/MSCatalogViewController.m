@@ -5,6 +5,7 @@
 #import "MSAddons.h"
 #import "MSCatalogPickerViewController.h"
 #import "MSTheme.h"
+#import "MSPlayerControls.h"
 #import <math.h>
 
 // Use the same local traits for layout and text. Per-controller accessibility
@@ -70,6 +71,50 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
 - (void)dealloc { [self.request cancel]; }
 @end
 
+static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
+    return [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:15 weight:UIFontWeightSemibold] compatibleWithTraitCollection:traits];
+}
+
+// Two real buttons retain visible labels and separate VoiceOver targets. The
+// shared Tabler templates are cached by MSPlayerIcon, just like player controls.
+@interface MSCatalogTypeControl : UIControl
+@property(nonatomic) NSInteger selectedSegmentIndex;
+@property(nonatomic,strong) NSArray<UIButton *> *buttons;
+@property(nonatomic,strong) UIStackView *buttonStack;
+@end
+@implementation MSCatalogTypeControl
+- (instancetype)initWithFrame:(CGRect)frame {
+    if((self=[super initWithFrame:frame])) {
+        self.backgroundColor=MSSurfaceColor();self.layer.cornerRadius=14;
+        NSMutableArray *buttons=[NSMutableArray array];NSArray *titles=@[@"Movies",@"Series"],*icons=@[@"movies",@"series"];
+        for(NSUInteger index=0;index<titles.count;index++){
+            UIButton *button=[UIButton buttonWithType:UIButtonTypeSystem];button.tag=(NSInteger)index;button.layer.cornerRadius=10;
+            [button setTitle:titles[index] forState:UIControlStateNormal];[button setImage:MSPlayerIcon(icons[index]) forState:UIControlStateNormal];
+            button.contentEdgeInsets=UIEdgeInsetsMake(10,12,10,20);button.titleEdgeInsets=UIEdgeInsetsMake(0,8,0,-8);
+            button.titleLabel.font=MSCatalogControlFont(self.traitCollection);button.titleLabel.adjustsFontForContentSizeCategory=YES;
+            button.accessibilityLabel=titles[index];button.accessibilityHint=@"Show catalogs for this title type";
+            [button.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES;
+            [button addTarget:self action:@selector(selectedButton:) forControlEvents:UIControlEventTouchUpInside];[buttons addObject:button];
+        }
+        self.buttons=buttons;self.buttonStack=[[UIStackView alloc]initWithArrangedSubviews:buttons];self.buttonStack.distribution=UIStackViewDistributionFillEqually;self.buttonStack.spacing=2;self.buttonStack.translatesAutoresizingMaskIntoConstraints=NO;[self addSubview:self.buttonStack];
+        [NSLayoutConstraint activateConstraints:@[[self.buttonStack.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:4],[self.buttonStack.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-4],[self.buttonStack.topAnchor constraintEqualToAnchor:self.topAnchor constant:4],[self.buttonStack.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-4]]];
+        self.isAccessibilityElement=NO;self.shouldGroupAccessibilityChildren=YES;self.selectedSegmentIndex=0;
+    }return self;
+}
+- (CGSize)intrinsicContentSize {
+    CGFloat width=0,height=44;for(UIButton *button in self.buttons){width=MAX(width,button.intrinsicContentSize.width);height=MAX(height,button.intrinsicContentSize.height);}
+    return CGSizeMake(ceil(width)*2+10,ceil(height)+8);
+}
+- (void)setSelectedSegmentIndex:(NSInteger)index {
+    _selectedSegmentIndex=index==1?1:0;
+    for(UIButton *button in self.buttons){BOOL selected=button.tag==_selectedSegmentIndex;button.backgroundColor=selected?MSAccentColor():UIColor.clearColor;button.tintColor=selected?MSBackgroundColor():MSSecondaryColor();[button setTitleColor:button.tintColor forState:UIControlStateNormal];button.accessibilityTraits=UIAccessibilityTraitButton|(selected?UIAccessibilityTraitSelected:0);}
+}
+- (void)selectedButton:(UIButton *)button {if(self.selectedSegmentIndex==button.tag)return;self.selectedSegmentIndex=button.tag;[self sendActionsForControlEvents:UIControlEventValueChanged];}
+- (void)traitCollectionDidChange:(UITraitCollection *)previous {
+    [super traitCollectionDidChange:previous];for(UIButton *button in self.buttons)button.titleLabel.font=MSCatalogControlFont(self.traitCollection);[self invalidateIntrinsicContentSize];
+}
+@end
+
 @interface MSCatalogSelectionControl : UIControl
 @property(nonatomic,strong) UILabel *nameLabel,*sourceLabel;
 @end
@@ -79,7 +124,7 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
         self.backgroundColor=MSSurfaceColor();self.layer.cornerRadius=12;
         _nameLabel=MSLabel(UIFontTextStyleBody,MSPrimaryColor());_nameLabel.font=MSFont(UIFontTextStyleBody,UIFontWeightSemibold);_nameLabel.numberOfLines=1;_nameLabel.lineBreakMode=NSLineBreakByTruncatingTail;
         _sourceLabel=MSLabel(UIFontTextStyleCaption1,MSSecondaryColor());_sourceLabel.numberOfLines=1;
-        UILabel *chevron=MSLabel(UIFontTextStyleBody,MSSecondaryColor());chevron.text=@"⌄";chevron.isAccessibilityElement=NO;
+        UIImageView *chevron=[[UIImageView alloc]initWithImage:MSPlayerIcon(@"close")];chevron.tintColor=MSSecondaryColor();chevron.isAccessibilityElement=NO;
         UIStackView *labels=[[UIStackView alloc]initWithArrangedSubviews:@[_nameLabel,_sourceLabel]];labels.axis=UILayoutConstraintAxisVertical;labels.spacing=2;
         UIStackView *row=[[UIStackView alloc]initWithArrangedSubviews:@[labels,chevron]];row.spacing=12;row.alignment=UIStackViewAlignmentCenter;row.userInteractionEnabled=NO;row.translatesAutoresizingMaskIntoConstraints=NO;[self addSubview:row];
         [chevron setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];[chevron setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
@@ -96,12 +141,12 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
 @property(nonatomic,copy) MSVideoSelection selection;
 @property(nonatomic,strong) UICollectionView *collection;
 @property(nonatomic,strong) UIRefreshControl *refreshControl;
-@property(nonatomic,strong) UISegmentedControl *typeControl;
+@property(nonatomic,strong) MSCatalogTypeControl *typeControl;
 @property(nonatomic,strong) UISearchController *searchController;
 @property(nonatomic,strong) MSCatalogSelectionControl *catalogButton;
 @property(nonatomic,strong) UIButton *filterButton,*clearButton;
 @property(nonatomic,strong) UILabel *filterSummary,*statusLabel,*emptyLabel;
-@property(nonatomic,strong) UIStackView *catalogBar,*activeFilterBar;
+@property(nonatomic,strong) UIStackView *catalogBar,*activeFilterBar,*controlsRow;
 @property(nonatomic,strong) NSArray<MSAddonCatalog *> *availableCatalogs;
 @property(nonatomic,strong) MSAddonCatalog *selectedCatalog;
 @property(nonatomic,copy) NSDictionary<NSString *,NSString *> *filterValues;
@@ -128,10 +173,11 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
     self.searchController=[[UISearchController alloc]initWithSearchResultsController:nil];self.searchController.searchResultsUpdater=self;self.searchController.searchBar.delegate=self;
     self.searchController.obscuresBackgroundDuringPresentation=NO;self.searchController.searchBar.barStyle=UIBarStyleBlack;self.searchController.searchBar.tintColor=MSAccentColor();
     self.navigationItem.searchController=self.searchController;self.navigationItem.hidesSearchBarWhenScrolling=NO;
-    self.typeControl=[[UISegmentedControl alloc]initWithItems:@[@"Movies",@"Series"]];self.typeControl.selectedSegmentIndex=0;self.typeControl.tintColor=MSAccentColor();self.typeControl.accessibilityLabel=@"Title type";
+    self.typeControl=[MSCatalogTypeControl new];self.typeControl.accessibilityLabel=@"Title type";
+    [self.typeControl setContentHuggingPriority:751 forAxis:UILayoutConstraintAxisHorizontal];[self.typeControl setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [self.typeControl addTarget:self action:@selector(typeChanged) forControlEvents:UIControlEventValueChanged];
     self.catalogButton=[MSCatalogSelectionControl new];[self.catalogButton addTarget:self action:@selector(chooseCatalog) forControlEvents:UIControlEventTouchUpInside];
-    self.filterButton=MSButton(@"Filters",NO);[self.filterButton addTarget:self action:@selector(chooseFilters) forControlEvents:UIControlEventTouchUpInside];
+    self.filterButton=MSButton(@"Filters",NO);[self.filterButton setImage:MSPlayerIcon(@"filters") forState:UIControlStateNormal];self.filterButton.tintColor=MSPrimaryColor();self.filterButton.contentEdgeInsets=UIEdgeInsetsMake(10,12,10,20);self.filterButton.titleEdgeInsets=UIEdgeInsetsMake(0,8,0,-8);self.filterButton.titleLabel.font=MSCatalogControlFont(self.traitCollection);self.filterButton.accessibilityLabel=@"Catalog filters";[self.filterButton addTarget:self action:@selector(chooseFilters) forControlEvents:UIControlEventTouchUpInside];
     [self.filterButton setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];[self.filterButton setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     self.catalogBar=[[UIStackView alloc]initWithArrangedSubviews:@[self.catalogButton,self.filterButton]];self.catalogBar.spacing=12;self.catalogBar.alignment=UIStackViewAlignmentFill;
     self.filterSummary=MSLabel(UIFontTextStyleFootnote,MSSecondaryColor());self.filterSummary.numberOfLines=2;
@@ -139,8 +185,8 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
     NSLayoutConstraint *clearHeight=[self.clearButton.heightAnchor constraintGreaterThanOrEqualToConstant:44];clearHeight.priority=999;clearHeight.active=YES;
     [self.clearButton setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];[self.clearButton setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     self.activeFilterBar=[[UIStackView alloc]initWithArrangedSubviews:@[self.filterSummary,self.clearButton]];self.activeFilterBar.spacing=8;self.activeFilterBar.alignment=UIStackViewAlignmentCenter;
-    UIStackView *header=[[UIStackView alloc]initWithArrangedSubviews:@[self.typeControl,self.catalogBar,self.activeFilterBar]];header.axis=UILayoutConstraintAxisVertical;header.spacing=10;
-    [self.typeControl.heightAnchor constraintGreaterThanOrEqualToConstant:44].active=YES;
+    self.controlsRow=[[UIStackView alloc]initWithArrangedSubviews:@[self.typeControl,self.catalogBar]];self.controlsRow.spacing=12;self.controlsRow.alignment=UIStackViewAlignmentFill;
+    UIStackView *header=[[UIStackView alloc]initWithArrangedSubviews:@[self.controlsRow,self.activeFilterBar]];header.axis=UILayoutConstraintAxisVertical;header.spacing=10;
     UICollectionViewFlowLayout *layout=[UICollectionViewFlowLayout new];layout.sectionInset=UIEdgeInsetsMake(16,20,24,20);layout.minimumInteritemSpacing=16;layout.minimumLineSpacing=20;
     self.collection=[[UICollectionView alloc]initWithFrame:CGRectZero collectionViewLayout:layout];self.collection.backgroundColor=MSBackgroundColor();self.collection.alwaysBounceVertical=YES;self.collection.keyboardDismissMode=UIScrollViewKeyboardDismissModeOnDrag;self.collection.dataSource=self;self.collection.delegate=self;
     self.refreshControl=[UIRefreshControl new];self.refreshControl.tintColor=MSAccentColor();[self.refreshControl addTarget:self action:@selector(refreshCatalog) forControlEvents:UIControlEventValueChanged];self.collection.refreshControl=self.refreshControl;
@@ -203,8 +249,9 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
     [self updateResponsiveHeader];
 }
 - (void)updateResponsiveHeader {
-    BOOL stacked=UIContentSizeCategoryIsAccessibilityCategory(self.traitCollection.preferredContentSizeCategory)||self.view.bounds.size.width<500;
-    UILayoutConstraintAxis axis=stacked?UILayoutConstraintAxisVertical:UILayoutConstraintAxisHorizontal;if(self.catalogBar.axis!=axis)self.catalogBar.axis=axis;
+    BOOL stacked=UIContentSizeCategoryIsAccessibilityCategory(self.traitCollection.preferredContentSizeCategory)||self.view.bounds.size.width<680;
+    UILayoutConstraintAxis axis=stacked?UILayoutConstraintAxisVertical:UILayoutConstraintAxisHorizontal;
+    if(self.controlsRow.axis!=axis)self.controlsRow.axis=axis;if(self.catalogBar.axis!=axis)self.catalogBar.axis=axis;
     self.catalogButton.nameLabel.numberOfLines=stacked?2:1;
 }
 - (void)chooseCatalog {
@@ -218,7 +265,7 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
     if(self.presentedViewController||!self.filterExtras.count)return;[self.searchController.searchBar resignFirstResponder];NSString *identity=self.selectedCatalog.identity;__weak typeof(self) weakSelf=self;
     MSCatalogFiltersViewController *filters=[[MSCatalogFiltersViewController alloc]initWithCatalog:self.selectedCatalog values:self.filterValues apply:^(NSDictionary *values){typeof(self) self=weakSelf;if(!self||![self.selectedCatalog.identity isEqualToString:identity])return;self.filterValues=[self validFilterValues:values catalog:self.selectedCatalog];[self persistSelection];[self updateCatalogControls];[self resetCatalogDebounced:NO];}];[self presentCatalogSheet:filters];
 }
-- (void)presentCatalogSheet:(UIViewController *)controller { UINavigationController *navigation=[[UINavigationController alloc]initWithRootViewController:controller];MSApplyNavigationStyle(navigation);navigation.modalPresentationStyle=UIModalPresentationFormSheet;navigation.preferredContentSize=controller.preferredContentSize;[self presentViewController:navigation animated:YES completion:nil]; }
+- (void)presentCatalogSheet:(UIViewController *)controller { UINavigationController *navigation=[[MSOutsideDismissNavigationController alloc]initWithRootViewController:controller];MSApplyNavigationStyle(navigation);navigation.modalPresentationStyle=UIModalPresentationFormSheet;navigation.preferredContentSize=controller.preferredContentSize;[self presentViewController:navigation animated:YES completion:nil]; }
 - (void)clearFilters { self.filterValues=@{};[self persistSelection];[self updateCatalogControls];[self resetCatalogDebounced:NO]; }
 - (void)typeChanged { [self restoreCatalogSelection];[self resetCatalogDebounced:NO]; }
 - (void)addonsChanged:(NSNotification *)notification { (void)notification;[self restoreCatalogSelection];[self resetCatalogDebounced:NO]; }
@@ -265,7 +312,7 @@ static UIFont *MSCatalogTextFont(UIFontTextStyle style, UITraitCollection *trait
     CGFloat available=collectionView.bounds.size.width-collectionView.adjustedContentInset.left-collectionView.adjustedContentInset.right-40;CGFloat minimum=UIContentSizeCategoryIsAccessibilityCategory(self.traitCollection.preferredContentSizeCategory)?260:160;NSInteger columns=MAX(1,(NSInteger)((available+16)/(minimum+16)));CGFloat width=floor((available-(columns-1)*16)/columns);CGFloat text=ceil(2*MSCatalogTextFont(UIFontTextStyleHeadline,self.traitCollection).lineHeight)+ceil(MSCatalogTextFont(UIFontTextStyleFootnote,self.traitCollection).lineHeight)+30;return CGSizeMake(width,width*1.5+text);
 }
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath { [collectionView deselectItemAtIndexPath:indexPath animated:NO];[self.searchController.searchBar resignFirstResponder];MSCatalogDetailViewController *detail=[[MSCatalogDetailViewController alloc]initWithMetadata:self.items[indexPath.item] catalogClient:self.client videoSelection:self.selection];[self.navigationController pushViewController:detail animated:YES]; }
-- (void)fontChanged:(NSNotification *)notification { (void)notification;[self updateResponsiveHeader];[self.collection.collectionViewLayout invalidateLayout];[self.collection reloadData]; }
+- (void)fontChanged:(NSNotification *)notification { (void)notification;self.filterButton.titleLabel.font=MSCatalogControlFont(self.traitCollection);[self.typeControl invalidateIntrinsicContentSize];[self updateResponsiveHeader];[self.collection.collectionViewLayout invalidateLayout];[self.collection reloadData]; }
 - (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
     [super traitCollectionDidChange:previousTraitCollection];
     if(self.isViewLoaded&&![previousTraitCollection.preferredContentSizeCategory isEqual:self.traitCollection.preferredContentSizeCategory])[self fontChanged:nil];

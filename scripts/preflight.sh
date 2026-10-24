@@ -2,7 +2,7 @@
 # Read-only host checks. This script never installs or downloads anything.
 set -eu
 
-fail() { printf 'MiniStream preflight: %s\n' "$*" >&2; exit 1; }
+fail() { printf 'StremIOS preflight: %s\n' "$*" >&2; exit 1; }
 launch_mode=${MS_LAUNCH_MODE:-storyboard}
 case "$launch_mode" in
     storyboard|static-ipad12) ;;
@@ -17,7 +17,7 @@ done
 developer_dir=${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}
 if [ -z "$developer_dir" ] || [ ! -d "$developer_dir/Platforms/iPhoneOS.platform" ]; then
     printf '%s\n' \
-        'MiniStream cannot be built yet: the selected developer tools do not contain the iPhoneOS platform.' \
+        'StremIOS cannot be built yet: the selected developer tools do not contain the iPhoneOS platform.' \
         "Selected developer directory: ${developer_dir:-none}" \
         'Command Line Tools alone are insufficient. Install full Xcode from Apple with iOS platform support.' \
         'Then, if needed, select it for this command without changing the system default:' \

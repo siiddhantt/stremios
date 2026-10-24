@@ -31,7 +31,7 @@ def obtain(cache, item):
         return target
     descriptor, temporary = tempfile.mkstemp(prefix=".download-", dir=cache)
     try:
-        request = urllib.request.Request(item["url"], headers={"User-Agent": "MiniStream-dependency-fetch/1"})
+        request = urllib.request.Request(item["url"], headers={"User-Agent": "StremIOS-dependency-fetch/1"})
         with os.fdopen(descriptor, "wb") as out, urllib.request.urlopen(request, timeout=60) as response:
             if not response.geturl().startswith("https://"):
                 raise ValueError("Dependency download did not retain HTTPS")

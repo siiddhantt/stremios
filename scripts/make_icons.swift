@@ -23,7 +23,7 @@ do {
             isPlanar: false, colorSpaceName: .deviceRGB,
             bytesPerRow: 0, bitsPerPixel: 0
         ), let graphics = NSGraphicsContext(bitmapImageRep: bitmap) else {
-            throw NSError(domain: "MiniStreamIcons", code: 1,
+            throw NSError(domain: "StremIOSIcons", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "Could not create icon bitmap."])
         }
         NSGraphicsContext.saveGraphicsState()
@@ -55,7 +55,7 @@ do {
         NSGraphicsContext.restoreGraphicsState()
 
         guard let png = bitmap.representation(using: .png, properties: [:]) else {
-            throw NSError(domain: "MiniStreamIcons", code: 2,
+            throw NSError(domain: "StremIOSIcons", code: 2,
                           userInfo: [NSLocalizedDescriptionKey: "Could not encode PNG."])
         }
         try png.write(to: destination.appendingPathComponent(name), options: .atomic)
@@ -65,8 +65,8 @@ do {
         // UILaunchImageSize remains portrait POINTS for either orientation.
         // Actual Retina PNGs use orientation-specific pixel dimensions.
         for (name, width, height) in [
-            ("MiniStreamLaunchPortrait@2x.png", 1536, 2048),
-            ("MiniStreamLaunchLandscape@2x.png", 2048, 1536)
+            ("StremIOSLaunchPortrait@2x.png", 1536, 2048),
+            ("StremIOSLaunchLandscape@2x.png", 2048, 1536)
         ] {
             guard let bitmap = NSBitmapImageRep(
                 bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
@@ -74,7 +74,7 @@ do {
                 isPlanar: false, colorSpaceName: .deviceRGB,
                 bytesPerRow: 0, bitsPerPixel: 24
             ), let pixels = bitmap.bitmapData else {
-                throw NSError(domain: "MiniStreamLaunch", code: 1,
+                throw NSError(domain: "StremIOSLaunch", code: 1,
                               userInfo: [NSLocalizedDescriptionKey: "Could not create launch bitmap."])
             }
             // Fill opaque RGB directly: Core Graphics drawing contexts do not
@@ -88,7 +88,7 @@ do {
                 }
             }
             guard let png = bitmap.representation(using: .png, properties: [:]) else {
-                throw NSError(domain: "MiniStreamLaunch", code: 2,
+                throw NSError(domain: "StremIOSLaunch", code: 2,
                               userInfo: [NSLocalizedDescriptionKey: "Could not encode launch PNG."])
             }
             try png.write(to: destination.appendingPathComponent(name), options: .atomic)
@@ -99,17 +99,17 @@ do {
         guard var info = try PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
               info["UIDeviceFamily"] as? [Int] == [2],
               info["MinimumOSVersion"] as? String == "12.0" else {
-            throw NSError(domain: "MiniStreamLaunch", code: 3,
+            throw NSError(domain: "StremIOSLaunch", code: 3,
                           userInfo: [NSLocalizedDescriptionKey: "Static launch mode requires the prepared iPad/iOS 12 Info.plist."])
         }
         let orientations = ["Portrait", "PortraitUpsideDown", "LandscapeLeft", "LandscapeRight"]
         let expectedOrientations = Set(orientations.map { "UIInterfaceOrientation" + $0 })
         guard Set(info["UISupportedInterfaceOrientations~ipad"] as? [String] ?? []) == expectedOrientations else {
-            throw NSError(domain: "MiniStreamLaunch", code: 4,
+            throw NSError(domain: "StremIOSLaunch", code: 4,
                           userInfo: [NSLocalizedDescriptionKey: "Static mode must preserve all four iPad orientations."])
         }
         let entries: [[String: String]] = orientations.map { orientation in
-            ["UILaunchImageName": orientation.hasPrefix("Portrait") ? "MiniStreamLaunchPortrait" : "MiniStreamLaunchLandscape",
+            ["UILaunchImageName": orientation.hasPrefix("Portrait") ? "StremIOSLaunchPortrait" : "StremIOSLaunchLandscape",
              "UILaunchImageMinimumOSVersion": "12.0",
              "UILaunchImageSize": "{768, 1024}",
              "UILaunchImageOrientation": orientation]

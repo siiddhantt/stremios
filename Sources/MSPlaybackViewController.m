@@ -677,7 +677,7 @@ static NSString *MSSafeWaitingReason(AVPlayerWaitingReason reason) {
     if (!self.player) return;
     [self tearDownSaving:YES];
     self.resume = YES;
-    self.statusPanel.hidden = NO; self.statusLabel.text = @"Paused while MiniStream was in the background.";
+    self.statusPanel.hidden = NO; self.statusLabel.text = @"Paused while StremIOS was in the background.";
     [self.retryButton setTitle:@"Resume playback" forState:UIControlStateNormal];
     self.retryButton.hidden = NO;
 }

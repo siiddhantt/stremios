@@ -128,7 +128,7 @@ static __weak MSAddonImportOperation *MSActiveImportOperation;
     [self finish:nil];
 }
 - (void)becameInactive:(NSNotification *)notification {
-    if (!self.finished) [self finish:MSImportError(7, @"The import paused when MiniStream became inactive. Saved add-ons were kept; use Retry Import to continue.")];
+    if (!self.finished) [self finish:MSImportError(7, @"The import paused when StremIOS became inactive. Saved add-ons were kept; use Retry Import to continue.")];
 }
 - (void)finish:(NSError *)error {
     if (self.finished) return;

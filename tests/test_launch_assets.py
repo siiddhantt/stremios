@@ -39,7 +39,7 @@ def main():
                 assert (destination / icon).is_file(), "Icon generation regressed"
             if mode == "storyboard":
                 assert generated == original_info, "Default mode must preserve the source launch settings"
-                assert not list(destination.glob("MiniStreamLaunch*"))
+                assert not list(destination.glob("StremIOSLaunch*"))
                 continue
             assert "UILaunchStoryboardName" not in generated
             assert "UILaunchStoryboards" not in generated
