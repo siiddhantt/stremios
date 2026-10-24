@@ -1,23 +1,25 @@
 Playback and Discover icons
 
-These are the official Tabler Icons outline assets, pinned to commit
+These are the official Tabler Icons assets, pinned to commit
  a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d
  https://github.com/tabler/tabler-icons/tree/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d
 
-The upstream paths, two-unit stroke, round caps and round joins are unchanged.
+The upstream paths are unchanged. Outline icons retain their two-unit stroke,
+round caps and round joins; the saved-state bookmark uses the official filled variant.
 Only currentColor is replaced with white for template tinting. The icon set
 includes its own professionally designed 15-second and CC outlines; no local
 lettering or improvised path geometry is added. Every asset occupies a 24-point
 canvas, with 24/48/72-pixel PNG variants, centered by the existing 44-point
 UIButton targets. Fullscreen exit is available under fullscreen-exit. Discover uses the same
 official movie, device-tv and adjustments-horizontal outlines for its Movies,
-Series and Filters controls.
+Series and Filters controls. Title pages use arrow-left, bookmark and
+the official filled bookmark for Back and Save states.
 
 LICENSE.txt is the exact upstream MIT license. The same license/attribution is
 included in the app's ThirdPartyNotices.txt. manifest.json records immutable
 source URLs and all input/output SHA-256 hashes.
 
-GeneratedIcons.h embeds 15,517 bytes of raster data, avoiding changes to bundle
+GeneratedIcons.h embeds 18,503 bytes of raster data, avoiding changes to bundle
 resource-copy scripts. MSPlayerControls.m decodes only the current device scale
 and caches at most 30 template images. There is no runtime SVG, font, network,
 or external library dependency. The SVG/PNG files remain in the source package

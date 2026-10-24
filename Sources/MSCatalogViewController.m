@@ -145,10 +145,11 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
 @property(nonatomic,strong) UISearchController *searchController;
 @property(nonatomic,strong) MSCatalogSelectionControl *catalogButton;
 @property(nonatomic,strong) UIButton *filterButton,*clearButton;
-@property(nonatomic,strong) UILabel *filterSummary,*statusLabel,*emptyLabel;
+@property(nonatomic,strong) UILabel *filterSummary,*statusLabel,*emptyLabel,*searchScopeLabel;
 @property(nonatomic,strong) UIStackView *catalogBar,*activeFilterBar,*controlsRow;
 @property(nonatomic,strong) NSArray<MSAddonCatalog *> *availableCatalogs;
 @property(nonatomic,strong) MSAddonCatalog *selectedCatalog;
+@property(nonatomic,strong) MSAddonCatalog *searchCatalog;
 @property(nonatomic,copy) NSDictionary<NSString *,NSString *> *filterValues;
 @property(nonatomic,strong) UIButton *retryButton;
 @property(nonatomic,strong) NSMutableArray<MSMetadata *> *items;
@@ -186,7 +187,8 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
     [self.clearButton setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];[self.clearButton setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     self.activeFilterBar=[[UIStackView alloc]initWithArrangedSubviews:@[self.filterSummary,self.clearButton]];self.activeFilterBar.spacing=8;self.activeFilterBar.alignment=UIStackViewAlignmentCenter;
     self.controlsRow=[[UIStackView alloc]initWithArrangedSubviews:@[self.typeControl,self.catalogBar]];self.controlsRow.spacing=12;self.controlsRow.alignment=UIStackViewAlignmentFill;
-    UIStackView *header=[[UIStackView alloc]initWithArrangedSubviews:@[self.controlsRow,self.activeFilterBar]];header.axis=UILayoutConstraintAxisVertical;header.spacing=10;
+    self.searchScopeLabel=MSLabel(UIFontTextStyleFootnote,MSSecondaryColor());self.searchScopeLabel.numberOfLines=1;self.searchScopeLabel.lineBreakMode=NSLineBreakByTruncatingTail;self.searchScopeLabel.hidden=YES;
+    UIStackView *header=[[UIStackView alloc]initWithArrangedSubviews:@[self.controlsRow,self.searchScopeLabel,self.activeFilterBar]];header.axis=UILayoutConstraintAxisVertical;header.spacing=10;
     UICollectionViewFlowLayout *layout=[UICollectionViewFlowLayout new];layout.sectionInset=UIEdgeInsetsMake(16,20,24,20);layout.minimumInteritemSpacing=16;layout.minimumLineSpacing=20;
     self.collection=[[UICollectionView alloc]initWithFrame:CGRectZero collectionViewLayout:layout];self.collection.backgroundColor=MSBackgroundColor();self.collection.alwaysBounceVertical=YES;self.collection.keyboardDismissMode=UIScrollViewKeyboardDismissModeOnDrag;self.collection.dataSource=self;self.collection.delegate=self;
     self.refreshControl=[UIRefreshControl new];self.refreshControl.tintColor=MSAccentColor();[self.refreshControl addTarget:self action:@selector(refreshCatalog) forControlEvents:UIControlEventValueChanged];self.collection.refreshControl=self.refreshControl;
@@ -227,7 +229,26 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
 - (NSArray<MSAddonCatalogExtra *> *)filterExtras {
     NSMutableArray *extras=[NSMutableArray array];for(MSAddonCatalogExtra *extra in self.selectedCatalog.extras)if(![@[@"search",@"skip"] containsObject:extra.name])[extras addObject:extra];return extras;
 }
+- (MSAddonCatalog *)searchCatalogForQuery {
+    if(!self.query.length)return nil;
+    NSMutableDictionary *selectedExtras=[self.filterValues mutableCopy]?:[NSMutableDictionary dictionary];selectedExtras[@"search"]=self.query;
+    if([self.selectedCatalog extraNamed:@"search"]&&[self.selectedCatalog requestExtrasForValues:selectedExtras skip:0 error:nil])return self.selectedCatalog;
+    // A sibling search catalog receives only the query. Browse filters may have
+    // different meanings on another endpoint, so never translate or forward them.
+    NSDictionary *queryOnly=@{@"search":self.query};
+    for(MSAddonCatalog *catalog in self.availableCatalogs)if([catalog.connectionIdentifier isEqual:self.selectedCatalog.connectionIdentifier]&&[catalog extraNamed:@"search"]&&[catalog requestExtrasForValues:queryOnly skip:0 error:nil])return catalog;
+    for(MSAddon *addon in MSAddonStore.sharedStore.addons)if(addon.builtIn&&[addon.identifier isEqual:@"com.linvo.cinemeta"])
+        for(MSAddonCatalog *catalog in addon.catalogs)if([catalog.type isEqual:self.selectedType]&&[catalog extraNamed:@"search"]&&[catalog requestExtrasForValues:queryOnly skip:0 error:nil])return catalog;
+    return nil;
+}
+- (BOOL)searchPausesBrowseFilters { return self.query.length&&![self.searchCatalog.identity isEqual:self.selectedCatalog.identity]; }
+- (MSAddonCatalog *)requestCatalog { return self.query.length?self.searchCatalog:self.selectedCatalog; }
+- (NSDictionary *)requestFilterValues {
+    NSMutableDictionary *values=self.searchPausesBrowseFilters?[NSMutableDictionary dictionary]:[self.filterValues mutableCopy];
+    if(!values)values=[NSMutableDictionary dictionary];if(self.query.length)values[@"search"]=self.query;return values;
+}
 - (NSString *)missingInputMessage {
+    if(self.query.length)return self.searchCatalog?nil:@"Search is unavailable from the installed catalogs. Clear the query to return to browsing.";
     if(!self.selectedCatalog)return @"No catalogs for this title type.\nAdd a catalog connection in Settings.";
     for(MSAddonCatalogExtra *extra in self.selectedCatalog.extras){
         if(!extra.isRequired||[extra.name isEqualToString:@"skip"])continue;
@@ -236,16 +257,18 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
     }return nil;
 }
 - (void)updateCatalogControls {
-    BOOL searchSupported=[self.selectedCatalog extraNamed:@"search"]!=nil;
-    if(!searchSupported){self.query=@"";self.searchController.searchBar.text=@"";self.searchController.active=NO;}
-    self.navigationItem.searchController=searchSupported?self.searchController:nil;self.searchController.searchBar.userInteractionEnabled=searchSupported;
-    self.searchController.searchBar.placeholder=searchSupported?([self.selectedType isEqualToString:@"series"]?@"Search this series catalog":@"Search this movie catalog"):@"Search unavailable for this catalog";
+    self.searchCatalog=[self searchCatalogForQuery];BOOL paused=self.searchPausesBrowseFilters;
+    self.navigationItem.searchController=self.searchController;self.searchController.searchBar.userInteractionEnabled=YES;
+    self.searchController.searchBar.placeholder=[self.selectedType isEqualToString:@"series"]?@"Search series":@"Search movies";
+    self.searchScopeLabel.hidden=!paused;
+    self.searchScopeLabel.text=paused?(self.searchCatalog?[NSString stringWithFormat:@"Search · %@",self.searchCatalog.addonName]:@"Search unavailable"):nil;
+    self.searchScopeLabel.accessibilityHint=paused?@"Browse filters are paused. Clear the query to restore your catalog and filters.":nil;
     self.catalogButton.enabled=self.availableCatalogs.count>0;self.catalogButton.nameLabel.text=self.selectedCatalog.name?:@"No catalogs";self.catalogButton.sourceLabel.text=self.selectedCatalog.addonName?:@"Add a connection in Settings";
     self.catalogButton.accessibilityLabel=[NSString stringWithFormat:@"Catalog, %@, %@",self.catalogButton.nameLabel.text,self.catalogButton.sourceLabel.text];
-    self.filterButton.enabled=self.filterExtras.count>0;self.filterButton.hidden=!self.filterButton.enabled;
+    self.filterButton.enabled=self.filterExtras.count>0&&!paused;self.filterButton.hidden=!self.filterButton.enabled;
     [self.filterButton setTitle:self.filterValues.count?[NSString stringWithFormat:@"Filters · %lu",(unsigned long)self.filterValues.count]:@"Filters" forState:UIControlStateNormal];
     NSMutableArray *parts=[NSMutableArray array];for(MSAddonCatalogExtra *extra in self.filterExtras)if(self.filterValues[extra.name].length)[parts addObject:[NSString stringWithFormat:@"%@: %@",MSCatalogFilterTitle(self.selectedCatalog,extra),self.filterValues[extra.name]]];
-    self.filterSummary.text=[parts componentsJoinedByString:@" · "];self.activeFilterBar.hidden=!parts.count;
+    self.filterSummary.text=[parts componentsJoinedByString:@" · "];self.activeFilterBar.hidden=!parts.count||paused;
     [self updateResponsiveHeader];
 }
 - (void)updateResponsiveHeader {
@@ -262,7 +285,7 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
     }];[self presentCatalogSheet:picker];
 }
 - (void)chooseFilters {
-    if(self.presentedViewController||!self.filterExtras.count)return;[self.searchController.searchBar resignFirstResponder];NSString *identity=self.selectedCatalog.identity;__weak typeof(self) weakSelf=self;
+    if(self.presentedViewController||!self.filterExtras.count||self.searchPausesBrowseFilters)return;[self.searchController.searchBar resignFirstResponder];NSString *identity=self.selectedCatalog.identity;__weak typeof(self) weakSelf=self;
     MSCatalogFiltersViewController *filters=[[MSCatalogFiltersViewController alloc]initWithCatalog:self.selectedCatalog values:self.filterValues apply:^(NSDictionary *values){typeof(self) self=weakSelf;if(!self||![self.selectedCatalog.identity isEqualToString:identity])return;self.filterValues=[self validFilterValues:values catalog:self.selectedCatalog];[self persistSelection];[self updateCatalogControls];[self resetCatalogDebounced:NO];}];[self presentCatalogSheet:filters];
 }
 - (void)presentCatalogSheet:(UIViewController *)controller { UINavigationController *navigation=[[MSOutsideDismissNavigationController alloc]initWithRootViewController:controller];MSApplyNavigationStyle(navigation);navigation.modalPresentationStyle=UIModalPresentationFormSheet;navigation.preferredContentSize=controller.preferredContentSize;[self presentViewController:navigation animated:YES completion:nil]; }
@@ -275,17 +298,20 @@ static UIFont *MSCatalogControlFont(UITraitCollection *traits) {
 - (void)active:(NSNotification *)notification { (void)notification;if(!self.visible)return;[self.collection reloadData];if(!self.loadedFirstPage&&!self.failed)[self loadNextPage]; }
 - (void)cancelLoading { self.generation++;[self.request cancel];self.request=nil;self.loading=NO;[self.refreshControl endRefreshing];[self updateStatus]; }
 - (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
-    if(![self.selectedCatalog extraNamed:@"search"])return;NSString *query=[searchController.searchBar.text?:@"" stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];if(query.length>160)query=[query substringToIndex:160];if([query isEqualToString:self.query])return;self.query=query;[self resetCatalogDebounced:YES];
+    NSString *query=[searchController.searchBar.text?:@"" stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];if(query.length>160)query=[query substringToIndex:160];if([query isEqualToString:self.query])return;self.query=query;[self updateCatalogControls];[self resetCatalogDebounced:query.length>0];
 }
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar { [searchBar resignFirstResponder]; }
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar {
+    self.query=@"";searchBar.text=@"";[searchBar resignFirstResponder];self.searchController.active=NO;[self updateCatalogControls];[self resetCatalogDebounced:NO];
+}
 - (void)resetCatalogDebounced:(BOOL)debounced {
     [self cancelLoading];self.nextSkip=0;self.hasMore=YES;self.failed=NO;self.loadedFirstPage=NO;[self.items removeAllObjects];[self.identifiers removeAllObjects];[self.collection reloadData];[self.collection setContentOffset:CGPointMake(0,-self.collection.adjustedContentInset.top) animated:NO];[self updateStatus];NSUInteger generation=self.generation;__weak typeof(self) weakSelf=self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW,(int64_t)((debounced?.4:0)*NSEC_PER_SEC)),dispatch_get_main_queue(),^{typeof(self) self=weakSelf;if(self&&self.visible&&self.generation==generation)[self loadNextPage];});
 }
 - (void)loadNextPage {
     if(!self.visible||self.loading||!self.hasMore||self.nextSkip>=500||self.missingInputMessage.length||UIApplication.sharedApplication.applicationState!=UIApplicationStateActive){[self.refreshControl endRefreshing];[self updateStatus];return;}
-    self.loading=YES;self.failed=NO;[self updateStatus];NSUInteger generation=self.generation,requestedSkip=self.nextSkip;NSMutableDictionary *extras=[self.filterValues mutableCopy];if(self.query.length)extras[@"search"]=self.query;__weak typeof(self) weakSelf=self;
-    self.request=[self.client loadCatalog:self.selectedCatalog extras:extras skip:requestedSkip completion:^(MSCatalogPage *page,NSError *error){
+    self.loading=YES;self.failed=NO;[self updateStatus];NSUInteger generation=self.generation,requestedSkip=self.nextSkip;NSDictionary *extras=[self requestFilterValues];__weak typeof(self) weakSelf=self;
+    self.request=[self.client loadCatalog:self.requestCatalog extras:extras skip:requestedSkip completion:^(MSCatalogPage *page,NSError *error){
         typeof(self) self=weakSelf;if(!self||self.generation!=generation||!self.visible)return;self.loading=NO;self.request=nil;[self.refreshControl endRefreshing];if(!page||error){self.failed=YES;[self updateStatus];return;}
         self.loadedFirstPage=YES;NSUInteger previousCount=self.items.count;
         for(MSMetadata *item in page.items){NSString *key=[NSString stringWithFormat:@"%@:%@",item.type,item.identifier];if(self.items.count>=500)break;if(![self.identifiers containsObject:key]){[self.identifiers addObject:key];[self.items addObject:item];}}

@@ -12,7 +12,8 @@ const entries = [
   ['cc','badge-cc'], ['fullscreen','maximize'], ['fullscreen-exit','minimize'],
   ['play','player-play'], ['pause','player-pause'],
   ['back','rewind-backward-15'], ['forward','rewind-forward-15'],
-  ['movies','movie'], ['series','device-tv'], ['filters','adjustments-horizontal']
+  ['movies','movie'], ['series','device-tv'], ['filters','adjustments-horizontal'],
+  ['nav-back','arrow-left'], ['save','bookmark'], ['saved','bookmark','filled']
 ];
 const sha = data => crypto.createHash('sha256').update(data).digest('hex');
 (async () => {
@@ -22,8 +23,8 @@ const sha = data => crypto.createHash('sha256').update(data).digest('hex');
     '#include <stddef.h>',
     'typedef struct { const char *name; const unsigned char *bytes[3]; size_t lengths[3]; } MSPlayerIconAsset;'];
   const table = [];
-  for (const [name, upstream] of entries) {
-    const input = fs.readFileSync(path.join(root,upstream+'.svg'));
+  for (const [name, upstream, style='outline'] of entries) {
+    const input = fs.readFileSync(path.join(root,(style==='filled'?'filled-':'')+upstream+'.svg'));
     // Only substitute the inherited color. Geometry and default two-unit
     // round-cap/round-join strokes are kept exactly as published upstream.
     const svg = Buffer.from(input.toString().replaceAll('currentColor','#ffffff'));
@@ -39,7 +40,7 @@ const sha = data => crypto.createHash('sha256').update(data).digest('hex');
       symbols.push(symbol); pngs.push({filename,scale,width:24*scale,height:24*scale,bytes:png.length,sha256:sha(png)});
     }
     table.push('    {"'+name+'", {'+symbols.join(', ')+'}, {'+symbols.map(x=>'sizeof('+x+')').join(', ')+'}}');
-    records.push({name,upstream,sourceURL:'https://raw.githubusercontent.com/tabler/tabler-icons/'+commit+'/icons/outline/'+upstream+'.svg',svgSHA256:sha(input),pngs});
+    records.push({name,upstream,style,sourceURL:'https://raw.githubusercontent.com/tabler/tabler-icons/'+commit+'/icons/'+style+'/'+upstream+'.svg',svgSHA256:sha(input),pngs});
   }
   parts.push('static const MSPlayerIconAsset MSPlayerIconAssets[] = {\n'+table.join(',\n')+'\n};');
   parts.push('static const size_t MSPlayerIconAssetCount = sizeof(MSPlayerIconAssets) / sizeof(MSPlayerIconAssets[0]);');

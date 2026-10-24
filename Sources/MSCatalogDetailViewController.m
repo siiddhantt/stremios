@@ -2,6 +2,7 @@
 #import "MSImageLoader.h"
 #import "MSLibraryStore.h"
 #import "MSTheme.h"
+#import "MSPlayerControls.h"
 #import <QuartzCore/QuartzCore.h>
 #import <math.h>
 
@@ -83,13 +84,18 @@ static UIColor *MSBackdropColor(UIImage *image) {
 @property(nonatomic) NSUInteger generation, posterGeneration, logoGeneration;
 @property(nonatomic) BOOL loaded, loading, failed, visible, artworkFailed, triedArtworkFallback, sizingHeader, summaryExpanded;
 @property(nonatomic) BOOL contentRevealed;
+@property(nonatomic,strong) UIButton *backNavigationButton,*saveNavigationButton;
+@property(nonatomic,weak) UINavigationBar *styledNavigationBar;
+@property(nonatomic,strong) UIImage *priorNavigationBackground,*priorCompactNavigationBackground,*priorNavigationShadow;
+@property(nonatomic,strong) UIColor *priorNavigationBarTint,*priorNavigationBackgroundColor;
+@property(nonatomic) BOOL navigationStyleCaptured,priorNavigationTranslucent;
 @end
 
 @implementation MSCatalogDetailViewController
 - (instancetype)initWithMetadata:(MSMetadata *)metadata catalogClient:(MSCatalogClient *)client videoSelection:(MSVideoSelection)selection {
     if ((self = [super initWithStyle:UITableViewStylePlain])) {
         _metadata = metadata; _client = client; _selection = [selection copy]; _episodes = @[]; _seasons = @[];
-        self.title = metadata.title; self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeNever;
+        self.title = metadata.title; self.navigationItem.title = @""; self.navigationItem.hidesBackButton = YES; self.navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayModeNever;
     }
     return self;
 }
@@ -100,6 +106,14 @@ static UIColor *MSBackdropColor(UIImage *image) {
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.edgesForExtendedLayout=UIRectEdgeAll;self.extendedLayoutIncludesOpaqueBars=YES;
+    self.tableView.contentInsetAdjustmentBehavior=UIScrollViewContentInsetAdjustmentNever;
+    self.backNavigationButton=[self navigationButtonWithIcon:@"nav-back" label:@"Back" action:@selector(goBack)];
+    self.saveNavigationButton=[self navigationButtonWithIcon:@"save" label:@"Save to favorites" action:@selector(toggleFavorite)];
+    self.navigationItem.leftBarButtonItem=[[UIBarButtonItem alloc]initWithCustomView:self.backNavigationButton];
+    self.navigationItem.rightBarButtonItem=[[UIBarButtonItem alloc]initWithCustomView:self.saveNavigationButton];
+    if(@available(iOS 13.0,*)){UINavigationBarAppearance *appearance=[UINavigationBarAppearance new];[appearance configureWithTransparentBackground];self.navigationItem.standardAppearance=appearance;self.navigationItem.compactAppearance=appearance;self.navigationItem.scrollEdgeAppearance=appearance;if(@available(iOS 15.0,*))self.navigationItem.compactScrollEdgeAppearance=appearance;}
+
     self.tableView.backgroundColor = MSBackgroundColor(); self.tableView.separatorColor = MSSurfaceColor();
     self.tableView.rowHeight = UITableViewAutomaticDimension; self.tableView.estimatedRowHeight = 72; self.tableView.separatorInset = UIEdgeInsetsMake(0,20,0,20); self.tableView.cellLayoutMarginsFollowReadableWidth = YES; self.tableView.tableFooterView = [UIView new];
     self.header = [[UIView alloc] initWithFrame:CGRectMake(0,0,self.tableView.bounds.size.width,1)];
@@ -150,8 +164,35 @@ static UIColor *MSBackdropColor(UIImage *image) {
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(libraryChanged:) name:MSLibraryDidChangeNotification object:nil];
     [self renderMetadata];
 }
-- (void)viewWillAppear:(BOOL)animated { [super viewWillAppear:animated]; self.visible = YES; [self beginInitialReveal]; [self renderMetadata]; if (self.loaded) { [self loadPoster]; [self loadLogo]; [self revealIfReady]; } else if (!self.failed) [self loadDetails]; }
-- (void)viewWillDisappear:(BOOL)animated { [super viewWillDisappear:animated]; self.visible = NO; [self cancelRequests]; }
+- (void)viewWillAppear:(BOOL)animated { [super viewWillAppear:animated]; self.visible = YES; [self applyArtworkNavigationStyle]; [self beginInitialReveal]; [self renderMetadata]; if (self.loaded) { [self loadPoster]; [self loadLogo]; [self revealIfReady]; } else if (!self.failed) [self loadDetails]; }
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];self.visible=NO;[self cancelRequests];[self restoreNavigationStyle];
+    id<UIViewControllerTransitionCoordinator> transition=self.transitionCoordinator;
+    if(transition){__weak typeof(self) weakSelf=self;[transition animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context){typeof(self) self=weakSelf;if(!self)return;if(context.isCancelled&&self.navigationController.topViewController==self)[self applyArtworkNavigationStyle];else if(!context.isCancelled)self.navigationStyleCaptured=NO;}];}
+    else self.navigationStyleCaptured=NO;
+}
+- (UIButton *)navigationButtonWithIcon:(NSString *)icon label:(NSString *)label action:(SEL)action {
+    UIButton *button=[UIButton buttonWithType:UIButtonTypeSystem];button.frame=CGRectMake(0,0,44,44);button.layer.cornerRadius=22;
+    button.backgroundColor=[UIColor colorWithRed:17.0/255 green:18.0/255 blue:23.0/255 alpha:0.88];button.tintColor=MSPrimaryColor();
+    [button setImage:MSPlayerIcon(icon) forState:UIControlStateNormal];button.accessibilityLabel=label;
+    [button.widthAnchor constraintEqualToConstant:44].active=YES;[button.heightAnchor constraintEqualToConstant:44].active=YES;
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];return button;
+}
+- (void)applyArtworkNavigationStyle {
+    UINavigationBar *bar=self.navigationController.navigationBar;if(!bar)return;
+    if(!self.navigationStyleCaptured){self.styledNavigationBar=bar;self.priorNavigationBackground=[bar backgroundImageForBarMetrics:UIBarMetricsDefault];self.priorCompactNavigationBackground=[bar backgroundImageForBarMetrics:UIBarMetricsCompact];self.priorNavigationShadow=bar.shadowImage;self.priorNavigationBarTint=bar.barTintColor;self.priorNavigationBackgroundColor=bar.backgroundColor;self.priorNavigationTranslucent=bar.translucent;self.navigationStyleCaptured=YES;}
+    UIImage *clear=[UIImage new];[bar setBackgroundImage:clear forBarMetrics:UIBarMetricsDefault];[bar setBackgroundImage:clear forBarMetrics:UIBarMetricsCompact];bar.shadowImage=clear;bar.barTintColor=UIColor.clearColor;bar.backgroundColor=UIColor.clearColor;bar.translucent=YES;
+    self.backNavigationButton.enabled=self.navigationController.viewControllers.count>1||self.navigationController.presentingViewController!=nil;
+}
+- (void)restoreNavigationStyle {
+    UINavigationBar *bar=self.styledNavigationBar;if(!self.navigationStyleCaptured||!bar)return;
+    [bar setBackgroundImage:self.priorNavigationBackground forBarMetrics:UIBarMetricsDefault];[bar setBackgroundImage:self.priorCompactNavigationBackground forBarMetrics:UIBarMetricsCompact];bar.shadowImage=self.priorNavigationShadow;bar.barTintColor=self.priorNavigationBarTint;bar.backgroundColor=self.priorNavigationBackgroundColor;bar.translucent=self.priorNavigationTranslucent;
+}
+- (void)goBack {
+    if(self.navigationController.transitionCoordinator)return;
+    if(self.navigationController.viewControllers.count>1)[self.navigationController popViewControllerAnimated:YES];
+    else if(self.navigationController.presentingViewController)[self.navigationController dismissViewControllerAnimated:YES completion:nil];
+}
 - (void)inactive:(NSNotification *)notification { [self cancelRequests]; }
 - (void)active:(NSNotification *)notification { if (self.visible) { [self beginInitialReveal]; if (self.loaded) { [self loadPoster]; [self loadLogo]; [self revealIfReady]; } else if (!self.failed) [self loadDetails]; } }
 - (void)cancelRequests {
@@ -305,9 +346,12 @@ static UIColor *MSBackdropColor(UIImage *image) {
     self.statusLabel.text = self.loading ? @"Loading details…" : self.failed ? @"Details unavailable. Try again." : self.loaded && series && !self.seasons.count ? @"No episodes available." : @"";
     self.statusLabel.hidden = !self.statusLabel.text.length; self.seasonButton.hidden = !self.seasons.count;
     if (self.selectedSeason) [self.seasonButton setTitle:[NSString stringWithFormat:@"%@ ▾",[self nameForSeason:self.selectedSeason]] forState:UIControlStateNormal];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[MSLibraryStore.sharedStore isFavorite:self.metadata.identifier] ? @"Saved ✓" : @"Save" style:UIBarButtonItemStylePlain target:self action:@selector(toggleFavorite)];
-    self.navigationItem.rightBarButtonItem.accessibilityLabel = [MSLibraryStore.sharedStore isFavorite:self.metadata.identifier] ? @"Remove from favorites" : @"Save to favorites";
-    if (!self.contentRevealed) self.navigationItem.rightBarButtonItem = nil;
+    BOOL saved=[MSLibraryStore.sharedStore isFavorite:self.metadata.identifier];
+    [self.saveNavigationButton setImage:MSPlayerIcon(saved?@"saved":@"save") forState:UIControlStateNormal];
+    self.saveNavigationButton.accessibilityLabel=saved?@"Remove from favorites":@"Save to favorites";
+    self.saveNavigationButton.accessibilityValue=saved?@"Saved":@"Not saved";
+    self.saveNavigationButton.accessibilityTraits=UIAccessibilityTraitButton|(saved?UIAccessibilityTraitSelected:0);
+    self.saveNavigationButton.enabled=self.metadata.identifier.length>0;
     [self sizeHeader];
 }
 - (void)toggleSummary {
@@ -424,12 +468,13 @@ static UIColor *MSBackdropColor(UIImage *image) {
     // never turns into a side card or stretches to fill a landscape frame.
     CGFloat artHeight=hasArtwork ? MIN(720,MAX(180,width/MAX(0.1,ratio))) : 0;
     if (ratio<1.1) artHeight=MIN(480,MAX(320,self.tableView.bounds.size.height*0.5));
-    CGFloat titleY=hasArtwork ? artHeight+12 : 24;
+    CGFloat minimumTitleY=MAX(24,self.tableView.safeAreaInsets.top+20);
+    CGFloat titleY=hasArtwork ? artHeight+12 : minimumTitleY;
     if (hasArtwork && !largeText) {
         CGFloat available=self.tableView.bounds.size.height-self.tableView.adjustedContentInset.top-self.tableView.adjustedContentInset.bottom;
         CGFloat raised=artHeight-titleSize.height-(width>=900 ? 84 : 60);
         CGFloat fitsPreview=available-32-titleSize.height-12-previewHeight;
-        titleY=MAX(24,MIN(raised,fitsPreview));
+        titleY=MAX(minimumTitleY,MIN(raised,fitsPreview));
     }
     self.hero.frame=CGRectMake(0,0,width,artHeight);
     self.heroText.frame=CGRectMake(left,titleY,contentWidth,titleSize.height);
@@ -443,7 +488,13 @@ static UIColor *MSBackdropColor(UIImage *image) {
     [self.hero setNeedsLayout]; [self.heroText setNeedsLayout]; [self.body setNeedsLayout];
     self.sizingHeader=NO;
 }
-- (void)viewDidLayoutSubviews { [super viewDidLayoutSubviews]; [self sizeHeader]; }
+- (void)updateArtworkInsets {
+    UIEdgeInsets inset=UIEdgeInsetsMake(0,0,self.tableView.safeAreaInsets.bottom,0);
+    if(!UIEdgeInsetsEqualToEdgeInsets(self.tableView.contentInset,inset))self.tableView.contentInset=inset;
+    self.tableView.scrollIndicatorInsets=UIEdgeInsetsMake(self.tableView.safeAreaInsets.top,0,inset.bottom,0);
+}
+- (void)viewSafeAreaInsetsDidChange { [super viewSafeAreaInsetsDidChange];[self updateArtworkInsets];[self sizeHeader]; }
+- (void)viewDidLayoutSubviews { [super viewDidLayoutSubviews];[self updateArtworkInsets];[self sizeHeader]; }
 - (void)fontChanged:(NSNotification *)notification { [self renderMetadata]; [self.tableView reloadData]; }
 - (void)dealloc { [self.revealDeadline invalidate]; [self.spinnerDelay invalidate]; [self.metadataRequest cancel]; [self.posterRequest cancel]; [self.logoRequest cancel]; [NSNotificationCenter.defaultCenter removeObserver:self]; }
 @end

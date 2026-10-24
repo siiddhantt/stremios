@@ -27,11 +27,11 @@
 
 </details>
 
-<p align="center"><sub>Captured on an iPad mini 2. Illustrative title artwork belongs to its respective owners.</sub></p>
+<p align="center"><sub>Title view captured on an iPad mini 2. Illustrative title artwork belongs to its respective owners.</sub></p>
 
 ## Features
 
-- **Browse beautifully.** Discover movies and series through a compact catalog picker, with search and filters supplied by your installed add-ons. Cinematic title pages bring together seasons, episodes, IMDb ratings and optional logos, with a stable fallback when artwork fails.
+- **Browse beautifully.** Discover movies and series through a compact catalog picker, with search and filters supplied by your installed add-ons. Cinematic title pages place Back and Save over edge-to-edge artwork, with seasons, episodes, IMDb ratings and optional logos. A stable fallback keeps titles readable when artwork fails.
 - **Pick up where you left off.** Continue watching, Saved and History stay on your device. Resume looks for the previously selected source without storing an expiring playback URL.
 - **One player interface.** Native HLS playback and VideoLAN for supported MP4/MKV sources share the same controls: audio, captions, seeking, picture size and pinch to zoom.
 - **Make it yours.** Accent colours, caption appearance and timing, language preferences and bounded artwork storage. No analytics or background video downloads.
@@ -44,7 +44,7 @@ After installing your build, open **Settings → Add-ons**:
 - **Configured add-on link:** paste your provider's configured `https://` or `stremio://` manifest link. StremIOS checks the manifest before saving it; add-ons that require configuration guide you back to their provider.
 - **Connect TorBox:** validate an API key directly with TorBox, then choose whether to share it with **Torrentio**, a separate service. Nothing is sent to Torrentio until you confirm that connection.
 
-In **Discover**, use the compact Movies/Series buttons, catalog selector and Filters. Catalogs are grouped by add-on; tap outside a catalog or filter sheet to close it without applying changes. Filters come from that catalog's manifest—Hindi appears when the provider offers a language list containing it. Search appears only where supported; Clear resets the selected filters. Compatible catalogs, metadata, sources and subtitles are supported, not every Stremio add-on feature. Connections and viewing history stay local; there is no Stremio account sync.
+In **Discover**, use the compact Movies/Series buttons, catalog selector and Filters. Catalogs are grouped by add-on; tap outside a catalog or filter sheet to close it without applying changes. Filters come from that catalog's manifest—Hindi appears when the provider offers a language list containing it. Search stays available in every catalog. If a catalog cannot search, StremIOS uses a search catalog from the same provider or Cinemeta and shows the search scope; clearing the query restores your browsing filters. Clear resets the selected filters. Compatible catalogs, metadata, sources and subtitles are supported, not every Stremio add-on feature. Connections and viewing history stay local; there is no Stremio account sync.
 
 ## Build from source
 

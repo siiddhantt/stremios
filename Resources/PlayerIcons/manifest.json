@@ -13,11 +13,12 @@
     "rsvg": "2.63.2",
     "vips": "8.18.7"
   },
-  "totalRasterBytes": 15517,
+  "totalRasterBytes": 18503,
   "icons": [
     {
       "name": "close",
       "upstream": "chevron-down",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/chevron-down.svg",
       "svgSHA256": "5a2e5c2a155ce06264a3f7299073ed636142dfd0b324b747387d9cfbf9fb5e3e",
       "pngs": [
@@ -50,6 +51,7 @@
     {
       "name": "view",
       "upstream": "aspect-ratio",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/aspect-ratio.svg",
       "svgSHA256": "9b05028beb4719d9df2116f5fb177f548579b325a35499c37ae5e8e3d609065c",
       "pngs": [
@@ -82,6 +84,7 @@
     {
       "name": "audio",
       "upstream": "volume",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/volume.svg",
       "svgSHA256": "1c2d4ffadf15616b7d27fcc66d28df9d5a43f34537ffc4da35c9d4c84c406450",
       "pngs": [
@@ -114,6 +117,7 @@
     {
       "name": "cc",
       "upstream": "badge-cc",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/badge-cc.svg",
       "svgSHA256": "88aa143faa5b7082c59498f5d135e6374912c407319b172011396c6f6d6f3327",
       "pngs": [
@@ -146,6 +150,7 @@
     {
       "name": "fullscreen",
       "upstream": "maximize",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/maximize.svg",
       "svgSHA256": "30569ec638ceb190575521f2246fee32e50ff8d26bf1f71b0ac46964cc26a039",
       "pngs": [
@@ -178,6 +183,7 @@
     {
       "name": "fullscreen-exit",
       "upstream": "minimize",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/minimize.svg",
       "svgSHA256": "2943549071ed9ba6594e5f88fc8442df16ccaee97503e7e82b93c4746fe14f6d",
       "pngs": [
@@ -210,6 +216,7 @@
     {
       "name": "play",
       "upstream": "player-play",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/player-play.svg",
       "svgSHA256": "e2bff69284f1dc77224c47c03798017206a29d4ef665549db724b0a4534d8e5c",
       "pngs": [
@@ -242,6 +249,7 @@
     {
       "name": "pause",
       "upstream": "player-pause",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/player-pause.svg",
       "svgSHA256": "d9be9ab25e52cdcae17def18d41edc0855fa44caa8492cde2b5b8cd085e8c5a6",
       "pngs": [
@@ -274,6 +282,7 @@
     {
       "name": "back",
       "upstream": "rewind-backward-15",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/rewind-backward-15.svg",
       "svgSHA256": "cc681405d4002434dd63c705497f0069a9e6c21be51a9a75c28e93679023a57d",
       "pngs": [
@@ -306,6 +315,7 @@
     {
       "name": "forward",
       "upstream": "rewind-forward-15",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/rewind-forward-15.svg",
       "svgSHA256": "dde29df84da5155dce955f67b898bc833aee635c0bd7914b95609d4ad54fc715",
       "pngs": [
@@ -338,6 +348,7 @@
     {
       "name": "movies",
       "upstream": "movie",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/movie.svg",
       "svgSHA256": "c060349bd89cf44c1542de982d06c61f81240868a336eb5ce670d048f564554f",
       "pngs": [
@@ -370,6 +381,7 @@
     {
       "name": "series",
       "upstream": "device-tv",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/device-tv.svg",
       "svgSHA256": "e0bd48b49471d717666a473295a524493c1622c5746e357192a46f830548e6ee",
       "pngs": [
@@ -402,6 +414,7 @@
     {
       "name": "filters",
       "upstream": "adjustments-horizontal",
+      "style": "outline",
       "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/adjustments-horizontal.svg",
       "svgSHA256": "51c876babc598cf69ad1146f0fb621919a975758df0cc7abf45052006358a353",
       "pngs": [
@@ -428,6 +441,105 @@
           "height": 72,
           "bytes": 468,
           "sha256": "9dbb642c54a0388f5ee1b3b86b9bc7327fa042b9de9489e243c486b72de8cbd3"
+        }
+      ]
+    },
+    {
+      "name": "nav-back",
+      "upstream": "arrow-left",
+      "style": "outline",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/arrow-left.svg",
+      "svgSHA256": "12af90f1bb49b7ae62792ecf38d2fa8b39daa4753e39ebc3520d07482a90704f",
+      "pngs": [
+        {
+          "filename": "nav-back.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 156,
+          "sha256": "04e3e6976923fbba100cb6d422ffaef707a9e72abdd2d03d33706104e23f29ee"
+        },
+        {
+          "filename": "nav-back@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 207,
+          "sha256": "4d8aea2ce1437bd7d4c76be5935b3486bae39cba246983175442371434d39efe"
+        },
+        {
+          "filename": "nav-back@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 262,
+          "sha256": "3f1c3d27fdd4304500ff3a63677a807ab8f9996090f3474ace7ff54db4a5d450"
+        }
+      ]
+    },
+    {
+      "name": "save",
+      "upstream": "bookmark",
+      "style": "outline",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/bookmark.svg",
+      "svgSHA256": "772d149644dd8889190361cb5e25715737146225a97d3f1871c1faed3577b19e",
+      "pngs": [
+        {
+          "filename": "save.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 259,
+          "sha256": "938ba0312973b7adbc0fcd391357168562608646f8a390a35ecb763bf0000177"
+        },
+        {
+          "filename": "save@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 443,
+          "sha256": "0314bb8da7f00f16d18a901c0eeef839942e17bde9fd6a4fef6145ac4e383e6d"
+        },
+        {
+          "filename": "save@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 632,
+          "sha256": "6767055a9c87ed1597b719f395333f72bf57b018654ac695d64670562b5d6fea"
+        }
+      ]
+    },
+    {
+      "name": "saved",
+      "upstream": "bookmark",
+      "style": "filled",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/filled/bookmark.svg",
+      "svgSHA256": "5f12cb09c998b42ad8da798960ce3b588f61f6a4a42afc1ec2ba918f9798158a",
+      "pngs": [
+        {
+          "filename": "saved.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 204,
+          "sha256": "4a4ca043457e8c72779f834c5313fffb6232ff68d022d26b1204333edc5adb6b"
+        },
+        {
+          "filename": "saved@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 335,
+          "sha256": "4ae0ad20e92d675505290014c56774b4fc98d2bd85e5cc0857de3791fca68aa1"
+        },
+        {
+          "filename": "saved@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 488,
+          "sha256": "485b408697319260aee2fbb8ba1bc4b8dc68a000331e6ff923b64d16bce4f6e3"
         }
       ]
     }

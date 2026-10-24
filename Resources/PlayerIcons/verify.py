@@ -42,15 +42,17 @@ def rgba(data):
 check(manifest['commit']=='a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d','Pinned source commit')
 check(manifest['pointSize']==24 and manifest['strokeWidth']==2,'Unified official geometry')
 check(manifest['license']=='MIT' and digest((p/'LICENSE.txt').read_bytes())==manifest['licenseSHA256'],'Exact upstream license')
-expected={'close','view','audio','cc','fullscreen','fullscreen-exit','play','pause','back','forward','movies','series','filters'}
+expected={'close','view','audio','cc','fullscreen','fullscreen-exit','play','pause','back','forward','movies','series','filters','nav-back','save','saved'}
 check({x['name'] for x in manifest['icons']}==expected,'Complete player action inventory')
 header=(p/'GeneratedIcons.h').read_text();total=0;bounds={}
 for icon in manifest['icons']:
- svg=(p/(icon['upstream']+'.svg')).read_bytes()
+ svg=(p/(('filled-' if icon.get('style')=='filled' else '')+icon['upstream']+'.svg')).read_bytes()
  check(digest(svg)==icon['svgSHA256'],'Unmodified upstream SVG hash')
  check(manifest['commit'] in icon['sourceURL'] and icon['sourceURL'].startswith('https://raw.githubusercontent.com/tabler/tabler-icons/'),'Pinned official provenance')
  root=ET.fromstring(svg)
- check(root.attrib['viewBox']=='0 0 24 24' and root.attrib['stroke-width']=='2' and root.attrib['stroke-linecap']=='round' and root.attrib['stroke-linejoin']=='round','Consistent official canvas and stroke')
+ check(root.attrib['viewBox']=='0 0 24 24','Consistent official canvas')
+ if icon.get('style')=='filled':check(root.attrib.get('fill')=='currentColor','Official selected-state fill')
+ else:check(root.attrib['stroke-width']=='2' and root.attrib['stroke-linecap']=='round' and root.attrib['stroke-linejoin']=='round','Consistent official outline stroke')
  check({x['scale'] for x in icon['pngs']}=={1,2,3},'All device scales present')
  for raster in icon['pngs']:
   data=(p/raster['filename']).read_bytes();total+=len(data)
