@@ -1,0 +1,40 @@
+{
+  "id": "com.linvo.cinemeta",
+  "version": "3.0.14",
+  "name": "Cinemeta",
+  "description": "The official addon for movie and series catalogs",
+  "resources": [
+    "catalog",
+    "meta",
+    "addon_catalog"
+  ],
+  "types": [
+    "movie",
+    "series"
+  ],
+  "idPrefixes": [
+    "tt"
+  ],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "top",
+      "name": "Popular",
+      "extraSupported": [
+        "search",
+        "genre",
+        "skip"
+      ]
+    },
+    {
+      "type": "series",
+      "id": "top",
+      "name": "Popular",
+      "extraSupported": [
+        "search",
+        "genre",
+        "skip"
+      ]
+    }
+  ]
+}

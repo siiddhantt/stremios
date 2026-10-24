@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "id": "tt0096697",
+    "type": "series",
+    "name": "The Simpsons",
+    "poster": "https://images.metahub.space/poster/small/tt0096697/img",
+    "releaseInfo": "1989–",
+    "videos": [
+      {
+        "id": "tt0096697:0:1",
+        "name": "Good Night",
+        "season": 0,
+        "episode": 1,
+        "released": "1987-04-20T04:00:00.000Z"
+      },
+      {
+        "id": "tt0096697:0:2",
+        "name": "Watching TV",
+        "season": 0,
+        "episode": 2,
+        "released": "1987-05-04T04:00:00.000Z"
+      }
+    ]
+  }
+}

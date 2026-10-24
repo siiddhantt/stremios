@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "id": "demo:big-buck-bunny",
+      "title": "Big Buck Bunny",
+      "year": 2008,
+      "duration": 596.48,
+      "summary": "A gentle giant faces three mischievous woodland creatures. This Blender open movie is our first playback test: one complete film, a native player, and saved progress.",
+      "streamURL": "https://media.w3.org/2010/05/bunny/movie.mp4",
+      "format": "480p · H.264 / AAC · MP4",
+      "license": "CC BY 3.0",
+      "licenseURL": "https://peach.blender.org/about/",
+      "sourceURL": "https://www.w3.org/2010/05/video/mediaevents.html",
+      "attribution": "Big Buck Bunny © 2008 Blender Foundation · www.bigbuckbunny.org. Licensed under Creative Commons Attribution 3.0. The stream retains the film’s end credits."
+    }
+  ]
+}

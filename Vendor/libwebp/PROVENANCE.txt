@@ -1,0 +1,11 @@
+libwebp 1.6.0
+Upstream: https://github.com/webmproject/libwebp
+Commit: 4fa21912338357f89e4fd51cf2368325b59e9bd9
+Downloaded source archive SHA-256: 923f3382a47a2af185c3240c954cf004428b237bd7317413a95146d01eb4b94b
+Only the decoder is linked. COPYING and PATENTS apply.
+
+Vendored subset: decoder sources selected by scripts/build-webp.sh and upstream
+headers. Unused encoder, mux, demux, non-arm64 DSP translation units and upstream
+Makefile.am files are omitted. Dependency closure was checked with the same
+arm64 iPhoneOS and macOS compiler flags used by the build. Upstream code in the
+retained files is unchanged; this is not the complete upstream source archive.

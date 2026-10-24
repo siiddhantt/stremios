@@ -1,0 +1,42 @@
+# Generated builds and downloaded dependencies are never public source inputs.
+/build/
+/.cache/
+/work/
+/DerivedData/
+*.ipa
+*.app/
+*.framework/
+*.xcframework/
+*.dSYM/
+*.o
+*.a
+*.zip
+*.tar.gz
+*.tar.xz
+*.xip
+
+# Machine-local and Python/Node generated files.
+.DS_Store
+__pycache__/
+*.py[cod]
+node_modules/
+*.xcuserstate
+xcuserdata/
+
+# Account configuration, temporary media sources and signing material.
+.env
+.env.*
+!.env.example
+AddonImport.json
+AddonImport.retry-required
+private-source*.json
+*-private.json
+*.mobileprovision
+*.p12
+*.p8
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+secrets/
+credentials/

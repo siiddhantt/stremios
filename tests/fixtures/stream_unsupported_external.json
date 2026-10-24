@@ -1,0 +1,8 @@
+{
+  "streams": [
+    {
+      "name": "Synthetic external-provider case",
+      "externalUrl": "https://example.invalid/provider/watch/demo"
+    }
+  ]
+}

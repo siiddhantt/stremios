@@ -1,0 +1,9 @@
+{
+  "streams": [
+    {
+      "name": "Synthetic torrent case — never resolve",
+      "infoHash": "0000000000000000000000000000000000000000",
+      "fileIdx": 0
+    }
+  ]
+}

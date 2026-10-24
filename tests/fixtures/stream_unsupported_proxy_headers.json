@@ -1,0 +1,16 @@
+{
+  "streams": [
+    {
+      "name": "Synthetic custom-header case",
+      "url": "https://example.invalid/video/demo.m3u8",
+      "behaviorHints": {
+        "proxyHeaders": {
+          "request": {
+            "User-Agent": "MiniStream-Offline-Test",
+            "Referer": "https://example.invalid/"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "library": "Tabler Icons",
+  "commit": "a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d",
+  "license": "MIT",
+  "licenseURL": "https://github.com/tabler/tabler-icons/blob/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/LICENSE",
+  "licenseSHA256": "b740a1d46122672da62833e97f7e7c8a13fa85cbc7445b584b297cc00dde93db",
+  "pointSize": 24,
+  "strokeWidth": 2,
+  "modifications": "CurrentColor set to white for UIImage template rendering; paths, stroke width, caps and joins unchanged.",
+  "renderer": {
+    "sharp": "0.35.5",
+    "rsvg": "2.63.2",
+    "vips": "8.18.7"
+  },
+  "totalRasterBytes": 12400,
+  "icons": [
+    {
+      "name": "close",
+      "upstream": "chevron-down",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/chevron-down.svg",
+      "svgSHA256": "5a2e5c2a155ce06264a3f7299073ed636142dfd0b324b747387d9cfbf9fb5e3e",
+      "pngs": [
+        {
+          "filename": "close.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 181,
+          "sha256": "645e05fb06d5e1adb4bdae34334ebd7059e68982130a9af6124ef65d3272aa2b"
+        },
+        {
+          "filename": "close@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 249,
+          "sha256": "8f7f0a50bfd56e5a6b4e418ac2b315bf5f93261d31bc06eefdf1ec934813b9e5"
+        },
+        {
+          "filename": "close@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 302,
+          "sha256": "28773fa81fb13cf0b22fb845ab9900128f39b94fdc8758c6295fc0db66f9811d"
+        }
+      ]
+    },
+    {
+      "name": "view",
+      "upstream": "aspect-ratio",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/aspect-ratio.svg",
+      "svgSHA256": "9b05028beb4719d9df2116f5fb177f548579b325a35499c37ae5e8e3d609065c",
+      "pngs": [
+        {
+          "filename": "view.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 223,
+          "sha256": "16928aa919efafabc5eb860e204108c77ebf312cccd7be0ca130d6cc86ed3b09"
+        },
+        {
+          "filename": "view@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 373,
+          "sha256": "cc78cc535dd82f766fffcd5c947e82a2bdf1ba1095fe279dd59e15f93c7b42cd"
+        },
+        {
+          "filename": "view@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 486,
+          "sha256": "759bcd6f10eb8aa8a73dab4ebd287936722003f9cba3cc008287cc418179a0ed"
+        }
+      ]
+    },
+    {
+      "name": "audio",
+      "upstream": "volume",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/volume.svg",
+      "svgSHA256": "1c2d4ffadf15616b7d27fcc66d28df9d5a43f34537ffc4da35c9d4c84c406450",
+      "pngs": [
+        {
+          "filename": "audio.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 373,
+          "sha256": "944fa37643dca4334c6d2aa0cd39d4150b3725f33657b63ff3cf9342e3f89dd9"
+        },
+        {
+          "filename": "audio@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 692,
+          "sha256": "eb3dc72555a8f00c6be97697203f3418e48023fda1873a694805f3733240769e"
+        },
+        {
+          "filename": "audio@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 1014,
+          "sha256": "75465487e202a9e951517a2ab04e3cd22a442b8a64e372449e194c871e3f30d7"
+        }
+      ]
+    },
+    {
+      "name": "cc",
+      "upstream": "badge-cc",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/badge-cc.svg",
+      "svgSHA256": "88aa143faa5b7082c59498f5d135e6374912c407319b172011396c6f6d6f3327",
+      "pngs": [
+        {
+          "filename": "cc.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 257,
+          "sha256": "3085b97e8ba0530114436c846f313fd91a635b10b3b448b5a8ab9a34c0ab3341"
+        },
+        {
+          "filename": "cc@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 442,
+          "sha256": "14a5c9208088676c36197a07d647570179e745a78f111a8eb4d89bd98061f909"
+        },
+        {
+          "filename": "cc@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 663,
+          "sha256": "2deb2841ef5206c81dcdeb025874944493e72b3bd40d6b70e4f7e462c6c66910"
+        }
+      ]
+    },
+    {
+      "name": "fullscreen",
+      "upstream": "maximize",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/maximize.svg",
+      "svgSHA256": "30569ec638ceb190575521f2246fee32e50ff8d26bf1f71b0ac46964cc26a039",
+      "pngs": [
+        {
+          "filename": "fullscreen.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 204,
+          "sha256": "1c2170e2dcbe096a297806baaff77afdb186531173607f180bfe20ebfa82edd1"
+        },
+        {
+          "filename": "fullscreen@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 352,
+          "sha256": "326de4bdcebb2de080516e7987a24c0fa0a767dc65e85dbf14eca013db3f8977"
+        },
+        {
+          "filename": "fullscreen@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 458,
+          "sha256": "43e66d40b1f9a8c825ab24882c27842d269063c5c4db631888ca9f171126cf25"
+        }
+      ]
+    },
+    {
+      "name": "fullscreen-exit",
+      "upstream": "minimize",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/minimize.svg",
+      "svgSHA256": "2943549071ed9ba6594e5f88fc8442df16ccaee97503e7e82b93c4746fe14f6d",
+      "pngs": [
+        {
+          "filename": "fullscreen-exit.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 198,
+          "sha256": "2ddbb9a66fd2d71d19d453e51605f1baab8f7647ba14d05f4f721d1993c6cdbf"
+        },
+        {
+          "filename": "fullscreen-exit@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 344,
+          "sha256": "db9641deab9dffd66b80353548df332d34dfe08d47650990a730205929978847"
+        },
+        {
+          "filename": "fullscreen-exit@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 449,
+          "sha256": "b0861a61e98029b929dc3966b803e3d7eb28c9a63bfb06653ff98b1c20e77c9d"
+        }
+      ]
+    },
+    {
+      "name": "play",
+      "upstream": "player-play",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/player-play.svg",
+      "svgSHA256": "e2bff69284f1dc77224c47c03798017206a29d4ef665549db724b0a4534d8e5c",
+      "pngs": [
+        {
+          "filename": "play.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 258,
+          "sha256": "dbbf55b24113cc4e556a10b79e18fd61e3d6da8d9d3ec7a24292fc532256a9ed"
+        },
+        {
+          "filename": "play@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 415,
+          "sha256": "012d5beb1b782ca1eb159b68a99fc85bb0c28350d4fec4b7d56202470cdb0002"
+        },
+        {
+          "filename": "play@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 538,
+          "sha256": "692961e9f5c36bd3981b8a0499fcec5142e1bd365b42f29e512cea6649d76562"
+        }
+      ]
+    },
+    {
+      "name": "pause",
+      "upstream": "player-pause",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/player-pause.svg",
+      "svgSHA256": "d9be9ab25e52cdcae17def18d41edc0855fa44caa8492cde2b5b8cd085e8c5a6",
+      "pngs": [
+        {
+          "filename": "pause.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 156,
+          "sha256": "993b6c53e777be30595ab94f6372e6dfb256e0fba3bd0b84f1204c60c264e597"
+        },
+        {
+          "filename": "pause@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 232,
+          "sha256": "a519dc8c0422c38be87542539077a778fb5389247e746cdcbba82ca12825e006"
+        },
+        {
+          "filename": "pause@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 318,
+          "sha256": "8ba8e5583098a8d5f880dc719c884f0e899a3d8470053e80fb6e59b9e224bb74"
+        }
+      ]
+    },
+    {
+      "name": "back",
+      "upstream": "rewind-backward-15",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/rewind-backward-15.svg",
+      "svgSHA256": "cc681405d4002434dd63c705497f0069a9e6c21be51a9a75c28e93679023a57d",
+      "pngs": [
+        {
+          "filename": "back.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 299,
+          "sha256": "7b84240b64805bc5f8cbc11fbb2091277d2510a11ee73345829ac237a20116bf"
+        },
+        {
+          "filename": "back@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 540,
+          "sha256": "f8ff90a67682fa59e555eaaacbb167da37120033edc60594e4daa58035c95f55"
+        },
+        {
+          "filename": "back@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 787,
+          "sha256": "cc8148143d120301e758f9fd3e7f1f71ff147e6837a78f75b75f0164c92e27ff"
+        }
+      ]
+    },
+    {
+      "name": "forward",
+      "upstream": "rewind-forward-15",
+      "sourceURL": "https://raw.githubusercontent.com/tabler/tabler-icons/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d/icons/outline/rewind-forward-15.svg",
+      "svgSHA256": "dde29df84da5155dce955f67b898bc833aee635c0bd7914b95609d4ad54fc715",
+      "pngs": [
+        {
+          "filename": "forward.png",
+          "scale": 1,
+          "width": 24,
+          "height": 24,
+          "bytes": 295,
+          "sha256": "60942d28066f90441ad31f8ba68ec689d9053d3a61e5c989f3c4c92a48e11124"
+        },
+        {
+          "filename": "forward@2x.png",
+          "scale": 2,
+          "width": 48,
+          "height": 48,
+          "bytes": 528,
+          "sha256": "4d4c64c517f89ebc4ff94c38e7a04d3a6c52607701dff60d52fcae3bfbe7b28e"
+        },
+        {
+          "filename": "forward@3x.png",
+          "scale": 3,
+          "width": 72,
+          "height": 72,
+          "bytes": 774,
+          "sha256": "8cf13abaf095973d9fcada5a24ac81332ed1f7461aa6a266834b263910a4a6df"
+        }
+      ]
+    }
+  ]
+}

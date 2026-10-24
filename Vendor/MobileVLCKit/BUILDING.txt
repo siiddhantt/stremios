@@ -1,0 +1,117 @@
+MiniStream playback dependency: MobileVLCKit 3.7.4
+
+This directory contains provenance, a fetch recipe and the unchanged LGPL 2.1
+license. It contains no compiled framework. The app dynamically links VideoLAN's
+official framework when building the VLC-enabled version; the selected source is
+probed only after the user chooses Play. HLS uses AVPlayer; other supported containers use VideoLAN.
+
+Prepare the official arm64 iOS framework from the project directory:
+
+  python3 Vendor/MobileVLCKit/fetch-vlckit.py --sources
+
+The default cache is .cache/vlckit inside the project checkout and is ignored
+by Git. To use a different local cache:
+
+  python3 Vendor/MobileVLCKit/fetch-vlckit.py --cache /absolute/cache --sources
+
+The first run downloads the 232,899,504-byte official archive, verifies SHA256
+BEFORE extraction, extracts only the iOS device framework, and selects its arm64
+slice. A different preexisting archive/framework is rejected, not overwritten.
+No simulator slices or dSYMs are extracted. No downloaded code is executed.
+The helper requires Python 3.9+ and Apple's xcrun/lipo. It does not install an app,
+accept a license, change Xcode selection, or run a device test.
+
+Build with the existing scripts (Xcode must already be installed):
+
+  DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+  MS_VLCKIT_FRAMEWORK=/absolute/cache/arm64/MobileVLCKit.framework \
+  ./scripts/build.sh /absolute/build-output
+
+MS_VLCKIT_FRAMEWORK must identify the framework directory, not its parent.
+Omitting it selects the project-local .cache/vlckit cache. The build's embed-vlckit.sh
+checks the exact original arm64 binary hash, embeds the executable and Info.plist,
+then ad-hoc signs the embedded framework before the app. Headers stay build-only.
+The dependency's MinimumOSVersion is 9.0, its recorded build SDK is 15.4, and the
+app still targets arm64 iOS 12.0. These metadata checks alone do not prove playback
+or battery performance; actual-device tests are separate.
+
+Link inputs:
+  -F <framework-parent> -framework MobileVLCKit
+  -Wl,-rpath,@executable_path/Frameworks
+
+The official podspec lists QuartzCore, CoreText, AVFoundation, Security,
+CFNetwork, AudioToolbox, OpenGLES, CoreGraphics, VideoToolbox and CoreMedia;
+libraries c++, xml2, z, bz2 and iconv. The prebuilt dynamic library records its
+system dependencies. No second bundled third-party dynamic library is needed.
+The original thin arm64 binary is 38,619,688 bytes. A compressed runtime archive
+estimate was about 16 MiB; installed app size and playback memory are different
+measurements. The preparation helper does not strip the verified binary.
+
+Binary and source pinning
+
+The authoritative VideoLAN release commit publishes the exact archive and hash:
+https://github.com/videolan/vlckit/blob/b2edca9ca041eafad1408ee91a55e6d87f7e23d5/Packaging/podspecs/MobileVLCKit.podspec
+
+Binary archive:
+https://download.videolan.org/pub/cocoapods/prod/MobileVLCKit-3.0-20260922-1512.tar.xz
+SHA256 c649c4c47bd065b3a5511746361b5a9066a34033f2df9cbc9454409c0f363b52
+
+VLCKit source commit:
+2c06f8f64ce6e8f48fd25337079a6051e0ca9bdd
+https://github.com/videolan/vlckit/tree/2c06f8f64ce6e8f48fd25337079a6051e0ca9bdd
+
+VLC base source commit selected by that build script:
+6de05adcbaf2e8b85fe86aad4169393098628119
+https://github.com/videolan/vlc/tree/6de05adcbaf2e8b85fe86aad4169393098628119
+
+Apply all 42 patches from the pinned VLCKit libvlc/patches directory in lexical
+order. They are part of this source recipe, not MiniStream modifications. The
+official buildMobileVLCKit.sh performs the checkout and git-am steps. The pinned
+.gitlab-ci.yml uses buildMobileVLCKit.sh -vf3 and
+Packaging/create-distributable-package.sh -vm for the device/simulator archive.
+Use the script's help and documented tool requirements before rebuilding; its
+contrib recipes download additional source archives with recorded checksums.
+The original CI used a Monterey/Xcode environment; rebuilding with a different
+SDK/toolchain is not claimed to produce identical bytes.
+
+The timestamped binary follows the September 22 source update; the intervening
+September 30 commits change TV-only CI and package-release metadata. All 23
+matching shipped public headers are byte-identical to this VLCKit commit. Binary
+inspection reports libVLC "3.0.24 Vetinari" and changeset
+"3.0.24-42-gcdceca9c6f", consistent with the pinned VLC base and 42 patches.
+The last hash is a generated patched build commit, not an upstream VLC tag.
+No independent byte-for-byte rebuild is claimed.
+
+The --sources option downloads and verifies both immutable source archives.
+Their URLs, lengths and SHA256 values are recorded in provenance.json. They
+include the wrapper, VLC code, patches, build scripts and contrib recipes.
+Contrib dependency archives themselves are not fetched by this helper; do not
+describe the two archives alone as a complete, self-contained offline rebuild.
+
+License / modification / redistribution
+
+Copyright belongs to VideoLAN and the respective VLCKit/libVLC contributors.
+VLCKit and libVLC are supplied under LGPL version 2.1 or, where stated in the
+source, later versions. See COPYING.LGPL-2.1.txt and the upstream source notices;
+individual bundled dependencies retain their own licenses. The official script
+configures a non-GPL contribution build. MiniStream does not modify VLCKit code;
+it extracts an existing architecture slice and signs it for this installation.
+
+Keep the upstream notices/license and source references with any redistributed
+build. Preserve recipients' LGPL rights, including modifying/replacing the
+library and reverse-engineering for debugging those changes. Dynamic linking
+does not remove the corresponding-source and other license obligations. Before
+public binary redistribution, provide the applicable corresponding sources,
+including required patches, dependency source material and build information.
+The source bundle and build scripts allow rebuilding the application; replacing
+the library also requires intentionally updating the local integrity pin and
+signing the modified app for the recipient's device. The default build rejects
+an unreviewed or accidentally changed dependency.
+
+The complete unchanged LGPL text and source credit are also included in the
+app's ThirdPartyNotices.txt. This preparation is for the existing local project;
+no app-store publication or public redistribution is performed by these scripts.
+
+Public repository policy: source only. Do not attach an IPA or compiled framework
+to a public release until the applicable corresponding-source, dependency-notice
+and library replacement/relinking obligations have been completed.

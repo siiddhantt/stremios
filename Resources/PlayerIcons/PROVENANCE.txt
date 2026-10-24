@@ -1,0 +1,33 @@
+MiniStream player icons
+
+These are the official Tabler Icons outline assets, pinned to commit
+ a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d
+ https://github.com/tabler/tabler-icons/tree/a4ce1404bc6d24d3c365afe7b258d6bf6f48d62d
+
+The upstream paths, two-unit stroke, round caps and round joins are unchanged.
+Only currentColor is replaced with white for template tinting. The icon set
+includes its own professionally designed 15-second and CC outlines; no local
+lettering or improvised path geometry is added. Every asset occupies a 24-point
+canvas, with 24/48/72-pixel PNG variants, centered by the existing 44-point
+UIButton targets. Fullscreen exit is available under fullscreen-exit.
+
+LICENSE.txt is the exact upstream MIT license. The same license/attribution is
+included in the app's ThirdPartyNotices.txt. manifest.json records immutable
+source URLs and all input/output SHA-256 hashes.
+
+GeneratedIcons.h embeds 12,400 bytes of raster data, avoiding changes to bundle
+resource-copy scripts. MSPlayerControls.m decodes only the current device scale
+and caches at most 30 template images. There is no runtime SVG, font, network,
+or external library dependency. The SVG/PNG files remain in the source package
+for review and regeneration; production only needs the generated header.
+
+Regeneration (development only):
+  node generate.cjs
+Requires Sharp 0.35.5 (librsvg 2.63.2, libvips 8.18.7) on NODE_PATH.
+The exact renderer versions are recorded in manifest.json. Existing committed
+outputs make regeneration unnecessary for a normal Apple-only app build.
+
+Local validation:
+  python3 verify.py
+Checks the source pin, all hashes, SVG geometry conventions, raster dimensions,
+alpha content, scales, header byte identity, license and total footprint.

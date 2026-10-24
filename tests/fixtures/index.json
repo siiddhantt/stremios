@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "purpose": "Offline, reduced protocol examples for a future importer. The first MiniStream slice does not implement Stremio add-ons or consume these fixtures.",
+  "not_runtime_test_evidence": true,
+  "fixtures": [
+    {
+      "file": "cinemeta_manifest.json",
+      "kind": "recorded_manifest",
+      "source_url": "https://v3-cinemeta.strem.io/manifest.json",
+      "sha256": "0614aebcf0a644d657756a42c104fac74c8db05f3f0cdc0069c366942c3ba105",
+      "notes": "Field projection; first two catalog descriptors only. Catalog extraSupported retained; genre options and other optional fields omitted.",
+      "recorded_at": "2026-10-24T04:18:20.949711+00:00"
+    },
+    {
+      "file": "cinemeta_catalog.json",
+      "kind": "recorded_catalog",
+      "source_url": "https://v3-cinemeta.strem.io/catalog/movie/top.json",
+      "sha256": "8399db67ca2835113db8e133fecd61f4599af088f80b7c62070722422db1fc80",
+      "notes": "Field projection of the first two recorded results; response flags and remaining results omitted. Dynamic titles are not a search assertion.",
+      "recorded_at": "2026-10-24T04:18:20.949711+00:00"
+    },
+    {
+      "file": "cinemeta_meta_movie.json",
+      "kind": "recorded_movie_meta",
+      "source_url": "https://v3-cinemeta.strem.io/meta/movie/tt1254207.json",
+      "sha256": "9bef710f12abc7d95268a272cf92cb4a0896d87f3098eff86c0e8c64baa59f06",
+      "notes": "Only basic metadata and the recorded empty videos array retained. This endpoint supplies no movie stream.",
+      "recorded_at": "2026-10-24T04:18:20.949711+00:00"
+    },
+    {
+      "file": "cinemeta_meta_series.json",
+      "kind": "recorded_series_meta",
+      "source_url": "https://v3-cinemeta.strem.io/meta/series/tt0096697.json",
+      "sha256": "8b7e42fd3e0a21ec78a30fb172c4ed50865661c741d5a6086ec91163b4f15199",
+      "notes": "Basic metadata and first two episodes only. Episode labels use name, not title; the original had 890 episodes.",
+      "recorded_at": "2026-10-24T04:18:20.949711+00:00"
+    },
+    {
+      "file": "stream_demo.json",
+      "kind": "synthetic_verified_media",
+      "source_url": "https://stremio.github.io/stremio-addon-sdk/api/responses/stream.html",
+      "sha256": "4ff67697440d258e9bd398626e207759b6b30a50f7b7afd997e7f8c9561c9ffb",
+      "notes": "Hand-authored protocol response around the independently checked licensed W3C MP4 sample. Not returned by Cinemeta and not a hosted add-on. The fixture does not execute playback or establish importer behavior.",
+      "constructed_at": "2026-10-24"
+    },
+    {
+      "file": "stream_unsupported_torrent.json",
+      "kind": "synthetic_unsupported_torrent",
+      "source_url": "https://stremio.github.io/stremio-addon-sdk/api/responses/stream.html",
+      "sha256": "4bf977bff680cb2b875a24508e323f77d6fe78a0da4cfe18d8441fd13a3aaef2",
+      "notes": "Dummy all-zero hash. Future importer must report unsupported engine requirement; never resolve or fetch it.",
+      "constructed_at": "2026-10-24",
+      "future_policy": "unsupported; explanatory message; no playback or network request"
+    },
+    {
+      "file": "stream_unsupported_external.json",
+      "kind": "synthetic_unsupported_external",
+      "source_url": "https://stremio.github.io/stremio-addon-sdk/api/responses/stream.html",
+      "sha256": "63a99dfe74303d61aaf6a413edd4562047395cc981206e848ca14b072eb77857",
+      "notes": "Reserved invalid domain. Future importer must distinguish an external website from a playable AVPlayer URL.",
+      "constructed_at": "2026-10-24",
+      "future_policy": "unsupported; explanatory message; no playback or network request"
+    },
+    {
+      "file": "stream_unsupported_proxy_headers.json",
+      "kind": "synthetic_unsupported_proxy_headers",
+      "source_url": "https://stremio.github.io/stremio-addon-sdk/api/responses/stream.html",
+      "sha256": "718de25b70e9aa3678a1e33832c21dbcfee40af913a7e3231c7f4f8022a8c6d9",
+      "notes": "Reserved invalid domain, fabricated non-secret headers. Future importer must explicitly reject unsupported header handling; never silently drop requirements.",
+      "constructed_at": "2026-10-24",
+      "future_policy": "unsupported; explanatory message; no playback or network request"
+    }
+  ],
+  "licensed_demo": {
+    "title": "Big Buck Bunny",
+    "license": "CC BY 3.0",
+    "license_url": "https://peach.blender.org/about/",
+    "provenance_url": "https://www.w3.org/2010/05/video/mediaevents.html",
+    "stream_url": "https://media.w3.org/2010/05/bunny/movie.mp4",
+    "duration_seconds": 596.48,
+    "endpoint_checked_at": "2026-10-24",
+    "evidence_scope": "Bounded HTTPS range requests returned HTTP 206 for the beginning and metadata tail. MP4 headers identify a 596.48-second H.264 Main Level 3.0 video at 853 by 480 pixels and AAC-LC 48 kHz audio. Separate tests using the production player on the iPad mini 2 passed initial playback, pause, seeking, and close/resume; this offline fixture is not the runtime evidence.",
+    "attribution": "Big Buck Bunny © 2008 Blender Foundation / www.bigbuckbunny.org. CC BY 3.0. Preserve the full end credits for full-movie screening.",
+    "codec_families": [
+      "H.264",
+      "AAC"
+    ],
+    "provenance_script_url": "https://www.w3.org/2010/05/video/script.js",
+    "container": "MP4",
+    "resolution": [
+      853,
+      480
+    ],
+    "video_profile": "Main",
+    "video_level": "3.0",
+    "audio_profile": "AAC-LC",
+    "audio_sample_rate_hz": 48000,
+    "content_length_bytes": 249224577,
+    "range_requests_supported": true
+  }
+}
