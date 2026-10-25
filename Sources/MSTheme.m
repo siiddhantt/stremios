@@ -27,6 +27,7 @@ UIFont *MSSubtitleFont(MSPlaybackPreferences *preferences) {
     NSDictionary *weights=@{@"regular":@(UIFontWeightRegular),@"medium":@(UIFontWeightMedium),@"semibold":@(UIFontWeightSemibold),@"bold":@(UIFontWeightBold)};
     CGFloat weight=[weights[preferences.subtitleFontWeight] doubleValue]; BOOL bold=weight>=UIFontWeightSemibold;
     NSString *name=nil;
+    if ([preferences.fontFamily isEqual:@"arial"]) name=bold?@"Arial-BoldMT":@"ArialMT";
     if ([preferences.fontFamily isEqual:@"serif"]) name=bold?@"Georgia-Bold":@"Georgia";
     if ([preferences.fontFamily isEqual:@"monospace"]) name=bold?@"Menlo-Bold":@"Menlo-Regular";
     return (name?[UIFont fontWithName:name size:preferences.subtitleFontSize]:nil) ?: [UIFont systemFontOfSize:preferences.subtitleFontSize weight:weight];

@@ -29,7 +29,7 @@ NSArray<NSString *> *MSVLCAdaptiveOptions(MSPlaybackPreferences *preferences) {
 #define MS_STRING_PREF(GETTER, SETTER, KEY, FALLBACK, ...) \
 - (NSString *)GETTER { return [self stringFor:KEY allowed:@[__VA_ARGS__] fallback:FALLBACK]; } \
 - (void)SETTER:(NSString *)value { NSArray *allowed = @[__VA_ARGS__]; NSString *normalized = [value isKindOfClass:NSString.class] && [allowed containsObject:value] ? value : FALLBACK; [self save:normalized key:KEY old:self.GETTER]; }
-MS_STRING_PREF(fontFamily, setFontFamily, @"fontFamily", @"system", @"system", @"serif", @"monospace")
+MS_STRING_PREF(fontFamily, setFontFamily, @"fontFamily", @"system", @"system", @"arial", @"serif", @"monospace")
 MS_STRING_PREF(style, setStyle, @"style", @"white-dark", @"white-dark", @"yellow-dark", @"white-shadow")
 - (NSString *)subtitleFontWeight { return [self stringFor:@"fontWeight" allowed:@[@"regular",@"medium",@"semibold",@"bold"] fallback:[self.fontFamily isEqual:@"system"]?@"semibold":@"regular"]; }
 - (void)setSubtitleFontWeight:(NSString *)value { NSArray *allowed=@[@"regular",@"medium",@"semibold",@"bold"];NSString *normalized=[value isKindOfClass:NSString.class]&&[allowed containsObject:value]?value:([self.fontFamily isEqual:@"system"]?@"semibold":@"regular");[self save:normalized key:@"fontWeight" old:self.subtitleFontWeight]; }
@@ -41,10 +41,36 @@ MS_STRING_PREF(preferredSubtitleLanguage, setPreferredSubtitleLanguage, @"subtit
 - (NSString *)subtitleColorHex { NSString *hex=MSNormalizedColorHex([self values][@"subtitleColor"]); return hex.length?MSReadableSubtitleHex(hex):@""; }
 - (void)setSubtitleColorHex:(NSString *)value { NSString *hex=MSNormalizedColorHex(value); [self save:hex.length?MSReadableSubtitleHex(hex):@"" key:@"subtitleColor" old:self.subtitleColorHex]; }
 - (NSString *)effectiveSubtitleColorHex { return self.subtitleColorHex.length?self.subtitleColorHex:([self.style isEqual:@"yellow-dark"]?@"FFE859":@"FFFFFF"); }
+- (double)subtitleVerticalOffset {
+    id value=[self values][@"verticalOffset"];
+    if(![value isKindOfClass:NSNumber.class]||CFGetTypeID((__bridge CFTypeRef)value)==CFBooleanGetTypeID())return 0;
+    double offset=[value doubleValue];return isfinite(offset)?fmin(0.50,fmax(-0.05,offset)):0;
+}
+- (void)setSubtitleVerticalOffset:(double)value {
+    double offset=isfinite(value)?fmin(0.50,fmax(-0.05,value)):0;
+    [self save:@(offset) key:@"verticalOffset" old:@(self.subtitleVerticalOffset)];
+}
+- (BOOL)subtitleShadowEnabled {
+    id value=[self values][@"shadowEnabled"];
+    if([value isKindOfClass:NSNumber.class]){
+        double number=[value doubleValue];if(isfinite(number)&&(number==0||number==1))return number==1;
+    }
+    return [self.style isEqual:@"white-shadow"];
+}
+- (void)setSubtitleShadowEnabled:(BOOL)value {
+    BOOL enabled=!!value,changed=enabled!=self.subtitleShadowEnabled;
+    NSMutableDictionary *values=[[self values] mutableCopy];
+    // Store explicit intent even when it matches a legacy fallback, so a later
+    // background preset cannot silently change this independent preference.
+    if(![values[@"shadowEnabled"] isEqual:@(enabled)]){
+        values[@"shadowEnabled"]=@(enabled);[self.defaults setObject:values forKey:MSPrefsKey];
+    }
+    if(changed)[NSNotificationCenter.defaultCenter postNotificationName:MSPlaybackPreferencesDidChangeNotification object:self];
+}
 - (void)resetSubtitleAppearance {
     NSMutableDictionary *values = [[self values] mutableCopy];
-    BOOL changed = self.subtitleFontSize != 24 || ![self.fontFamily isEqual:@"system"] || ![self.style isEqual:@"white-dark"] || ![self.position isEqual:@"bottom"] || ![self.subtitleFontWeight isEqual:@"semibold"] || self.subtitleColorHex.length;
-    for (NSString *key in @[@"fontSize", @"fontFamily", @"style", @"position", @"fontWeight", @"subtitleColor"]) [values removeObjectForKey:key];
+    BOOL changed = self.subtitleFontSize != 24 || ![self.fontFamily isEqual:@"system"] || ![self.style isEqual:@"white-dark"] || ![self.position isEqual:@"bottom"] || ![self.subtitleFontWeight isEqual:@"semibold"] || self.subtitleColorHex.length || self.subtitleVerticalOffset!=0 || self.subtitleShadowEnabled;
+    for (NSString *key in @[@"fontSize", @"fontFamily", @"style", @"position", @"fontWeight", @"subtitleColor", @"verticalOffset", @"shadowEnabled"]) [values removeObjectForKey:key];
     [self.defaults setObject:values forKey:MSPrefsKey];
     if (changed) [NSNotificationCenter.defaultCenter postNotificationName:MSPlaybackPreferencesDidChangeNotification object:self];
 }

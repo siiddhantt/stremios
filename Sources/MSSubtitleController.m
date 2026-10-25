@@ -44,6 +44,7 @@ static NSString *MSCaptionString(id value, NSUInteger limit) {
 - (void)selectSourceEmbedded:(NSDictionary *)track;
 @property(nonatomic, strong) AVPlayerItem *item;
 @property(nonatomic, weak) UIView *overlay;
+@property(nonatomic, strong) UIView *captionCanvas;
 @property(nonatomic, strong) UILabel *label;
 @property(nonatomic, copy) NSString *type;
 @property(nonatomic, copy) NSString *videoID;
@@ -204,15 +205,19 @@ static NSString *MSCaptionString(id value, NSUInteger limit) {
         _label.numberOfLines = 4; _label.lineBreakMode = NSLineBreakByTruncatingTail;
         _label.userInteractionEnabled = NO; _label.hidden = YES;
         _label.layer.cornerRadius = 5; _label.clipsToBounds = YES;
-        [overlay addSubview:_label];
+        _captionCanvas = [[UIView alloc] initWithFrame:CGRectMake(0,0,MAX(32,overlay.bounds.size.width),MAX(32,overlay.bounds.size.height))];
+        _captionCanvas.userInteractionEnabled = NO; _captionCanvas.hidden = YES; _captionCanvas.clipsToBounds = YES;
+        [overlay addSubview:_captionCanvas]; [_captionCanvas addSubview:_label];
         [NSLayoutConstraint activateConstraints:@[
-            [_label.leadingAnchor constraintGreaterThanOrEqualToAnchor:overlay.safeAreaLayoutGuide.leadingAnchor constant:24],
-            [_label.trailingAnchor constraintLessThanOrEqualToAnchor:overlay.safeAreaLayoutGuide.trailingAnchor constant:-24],
-            [_label.centerXAnchor constraintEqualToAnchor:overlay.centerXAnchor],
-            [_label.widthAnchor constraintLessThanOrEqualToAnchor:overlay.widthAnchor multiplier:0.9],
-            [_label.topAnchor constraintGreaterThanOrEqualToAnchor:overlay.safeAreaLayoutGuide.topAnchor constant:12],
-            [_label.bottomAnchor constraintLessThanOrEqualToAnchor:overlay.safeAreaLayoutGuide.bottomAnchor constant:-12]
+            [_label.leadingAnchor constraintGreaterThanOrEqualToAnchor:_captionCanvas.leadingAnchor constant:8],
+            [_label.trailingAnchor constraintLessThanOrEqualToAnchor:_captionCanvas.trailingAnchor constant:-8],
+            [_label.centerXAnchor constraintEqualToAnchor:_captionCanvas.centerXAnchor],
+            [_label.widthAnchor constraintLessThanOrEqualToAnchor:_captionCanvas.widthAnchor multiplier:0.9],
+            [_label.topAnchor constraintGreaterThanOrEqualToAnchor:_captionCanvas.topAnchor constant:8],
+            [_label.bottomAnchor constraintLessThanOrEqualToAnchor:_captionCanvas.bottomAnchor constant:-8]
         ]];
+        _positionConstraint = [_label.bottomAnchor constraintEqualToAnchor:_captionCanvas.bottomAnchor constant:-12];
+        _positionConstraint.priority = 999; _positionConstraint.active = YES;
         [self applyAppearance];
         NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
         [center addObserver:self selector:@selector(preferencesChanged:) name:MSPlaybackPreferencesDidChangeNotification object:nil];
@@ -326,7 +331,7 @@ static NSString *MSCaptionString(id value, NSUInteger limit) {
     if (![self isCurrent] || self.backgrounded || !self.track) { self.label.hidden = YES; return; }
     NSTimeInterval time = self.usesPlaybackSource ? [self.playbackSource subtitlePlaybackTime] : CMTimeGetSeconds(self.player.currentTime);
     NSString *text = [self.track textAtTime:time - self.delay];
-    if (![self.label.text isEqualToString:text]) self.label.text = text;
+    if (![self.label.text isEqualToString:text]) { self.label.text = text; [self updateCaptionLayout]; }
     self.label.hidden = text.length == 0;
 }
 
@@ -362,7 +367,7 @@ static NSString *MSCaptionString(id value, NSUInteger limit) {
     if (self.invalidated) return;
     self.invalidated = YES; [self cancelRequests]; [self clearExternalTrack];
     [NSNotificationCenter.defaultCenter removeObserver:self];
-    [self.label removeFromSuperview];
+    [self.captionCanvas removeFromSuperview];
     [self.pickerNavigation dismissViewControllerAnimated:NO completion:nil];
     self.picker = nil; self.pickerNavigation = nil;
 }
@@ -548,15 +553,29 @@ static NSString *MSCaptionString(id value, NSUInteger limit) {
     MSPlaybackPreferences *p = MSPlaybackPreferences.sharedPreferences;
     self.label.font = MSSubtitleFont(p);
     self.label.textColor = MSColorFromHex(p.effectiveSubtitleColorHex);
-    BOOL shadow = [p.style isEqual:@"white-shadow"];
-    self.label.backgroundColor = shadow ? UIColor.clearColor : [UIColor colorWithWhite:0 alpha:0.8];
+    BOOL shadow = p.subtitleShadowEnabled;
+    self.label.backgroundColor = [p.style isEqual:@"white-shadow"] ? UIColor.clearColor : [UIColor colorWithWhite:0 alpha:0.8];
     self.label.shadowColor = shadow ? UIColor.blackColor : nil; self.label.shadowOffset = shadow ? CGSizeMake(1, 2) : CGSizeZero;
-    self.positionConstraint.active = NO;
-    if ([p.position isEqual:@"top"]) self.positionConstraint = [self.label.topAnchor constraintEqualToAnchor:self.overlay.safeAreaLayoutGuide.topAnchor constant:20];
-    else if ([p.position isEqual:@"middle"]) self.positionConstraint = [self.label.centerYAnchor constraintEqualToAnchor:self.overlay.centerYAnchor];
-    else self.positionConstraint = [self.label.bottomAnchor constraintEqualToAnchor:self.overlay.safeAreaLayoutGuide.bottomAnchor constant:-58];
-    self.positionConstraint.active = YES;
+    [self updateCaptionLayout];
     // Keep native caption styling untouched on the older media runtime.
+}
+- (void)updateVideoRect:(CGRect)rect {
+    if (self.invalidated || !isfinite(rect.origin.x) || !isfinite(rect.origin.y) ||
+        !isfinite(rect.size.width) || !isfinite(rect.size.height)) return;
+    CGRect visible = CGRectIntersection(rect,self.overlay.bounds);
+    if (CGRectIsNull(visible) || CGRectIsEmpty(visible)) return;
+    if (!CGRectEqualToRect(self.captionCanvas.frame,visible)) self.captionCanvas.frame = visible;
+    self.captionCanvas.hidden = NO;
+    [self updateCaptionLayout];
+}
+- (void)updateCaptionLayout {
+    CGSize area = self.captionCanvas.bounds.size;
+    if (area.width <= 16 || area.height <= 16) return;
+    CGFloat textHeight = ceil([self.label sizeThatFits:CGSizeMake(area.width*0.9,CGFLOAT_MAX)].height);
+    CGFloat inset = MAX(12,area.height*0.04) + MSPlaybackPreferences.sharedPreferences.subtitleVerticalOffset*area.height;
+    inset = MIN(MAX(8,area.height-textHeight-8),MAX(8,inset));
+    self.positionConstraint.constant = -inset;
+    [self.captionCanvas setNeedsLayout];
 }
 - (void)saveSelection {
     if (!self.contentIdentifier.length || !self.selectedSelection) return;

@@ -126,6 +126,16 @@ int main(void) {
 
         MSStream *source=stream(fixture(@"stream_demo.json")[@"streams"][0]);
         check(source.canAttemptPlayback && [source.URL.scheme isEqualToString:@"https"],"ordinary public H264 MP4 fixture eligible for attempt");
+        NSString *repairSecret=[@"D-" stringByAppendingString:repeat(@"a",64)];
+        NSString *repairReference=[NSString stringWithFormat:@"T-%@.%@",repeat(@"8",64),repeat(@"9",43)];
+        NSURL *repairManifest=[NSURL URLWithString:[NSString stringWithFormat:@"https://mediafusion.elfhosted.com/%@/manifest.json",repairSecret]];
+        MSAddon *repairAddon=[MSAddon addonWithManifest:@{@"id":@"stremio.addons.mediafusion|elfhostedtrb",@"name":@"MediaFusion",@"types":@[@"movie"],@"resources":@[@"stream"],@"catalogs":@[]} URL:repairManifest error:nil];
+        NSDictionary *repairRaw=@{@"url":[NSString stringWithFormat:@"https://mediafusion.elfhosted.com/streaming_provider/D-[redacted]/playback/torbox/%@",repairReference],@"name":@"1080p H.264",@"behaviorHints":@{@"filename":@"Synthetic.fixture.mp4"}};
+        source=[MSStream streamWithDictionary:repairRaw addon:repairAddon];
+        check(source.canAttemptPlayback && [source.URL.path containsString:repairSecret] && [source.URL.lastPathComponent isEqual:repairReference],"exact add-on ingestion restores known config and retains reference");
+        check([repairRaw[@"url"] containsString:@"[redacted]"] && [repairAddon.manifestURL isEqual:repairManifest],"repair never mutates source document or saved configuration");
+        MSStream *withoutContext=[MSStream streamWithDictionary:repairRaw addonName:repairAddon.name addonIdentifier:repairAddon.identifier];
+        check([withoutContext.URL.path containsString:@"[redacted]"] && [source.sourceFingerprint isEqual:withoutContext.sourceFingerprint],"context-free parsing leaves URL untouched and source fingerprint unchanged");
         for (NSString *name in @[@"stream_unsupported_torrent.json",@"stream_unsupported_external.json",@"stream_unsupported_proxy_headers.json"]) {
             source=stream(fixture(name)[@"streams"][0]); check(!source.canAttemptPlayback,"unsupported transport fixture cannot play natively");
         }

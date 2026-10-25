@@ -13,6 +13,22 @@
 #import <AVFoundation/AVFoundation.h>
 #import <math.h>
 
+static uint32_t MSVLCFourCC(const char *code) { return (uint32_t)(unsigned char)code[0] | ((uint32_t)(unsigned char)code[1]<<8) | ((uint32_t)(unsigned char)code[2]<<16) | ((uint32_t)(unsigned char)code[3]<<24); }
+static NSString *MSVLCCaptionCodecName(NSNumber *codec) {
+    if(![codec isKindOfClass:NSNumber.class])return @"unknown";
+    uint32_t value=codec.unsignedIntValue;
+    if(value==MSVLCFourCC("subt"))return @"plain-text";
+    if(value==MSVLCFourCC("tx3g"))return @"tx3g";
+    if(value==MSVLCFourCC("wvtt"))return @"webvtt";
+    if(value==MSVLCFourCC("ssa "))return @"ass-ssa";
+    if(value==MSVLCFourCC("usf "))return @"usf";
+    if(value==MSVLCFourCC("TTML"))return @"ttml";
+    if(value==MSVLCFourCC("bdpg"))return @"pgs-bitmap";
+    if(value==MSVLCFourCC("spu "))return @"dvd-bitmap";
+    if(value==MSVLCFourCC("dvbs"))return @"dvb-bitmap";
+    return @"unknown";
+}
+
 static NSString *MSVLCTrackText(id value, NSUInteger limit) {
     if (![value isKindOfClass:NSString.class]) return @"";
     NSString *text = [value length] > limit ? [value substringToIndex:limit] : value;
@@ -100,9 +116,14 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
 }
 @end
 
-@interface MSVLCPlaybackViewController () <VLCMediaPlayerDelegate, MSSubtitlePlaybackSource, UIGestureRecognizerDelegate, UIPopoverPresentationControllerDelegate>
+@interface MSVLCPlaybackViewController () <VLCMediaPlayerDelegate, VLCMediaDelegate, MSSubtitlePlaybackSource, UIGestureRecognizerDelegate, UIPopoverPresentationControllerDelegate>
 @property(nonatomic,strong) MSMedia *media;
 @property(nonatomic,strong) VLCMediaPlayer *player;
+@property(nonatomic,strong) VLCMedia *pendingCaptionMedia;
+@property(nonatomic,strong) NSTimer *captionParseTimer;
+@property(nonatomic) BOOL captionMetadataRequested;
+@property(nonatomic) NSInteger captionMetadataStatus; // 0 not needed, 1 parsing, 2 sized, 3 fallback, 4 cancelled
+@property(nonatomic) double captionSourceHeight;
 @property(nonatomic,strong) MSSubtitleController *subtitles;
 @property(nonatomic,strong) NSObject *audioOwner;
 @property(nonatomic,strong) UIView *videoView, *videoViewport, *subtitleOverlay, *header, *footer, *statusPanel;
@@ -177,6 +198,7 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
     [center addObserver:self selector:@selector(servicesLost:) name:AVAudioSessionMediaServicesWereLostNotification object:nil];
     [center addObserver:self selector:@selector(servicesReset:) name:AVAudioSessionMediaServicesWereResetNotification object:nil];
     [center addObserver:self selector:@selector(voiceOverStatusChanged:) name:UIAccessibilityVoiceOverStatusDidChangeNotification object:nil];
+    [center addObserver:self selector:@selector(subtitlePreferencesChanged:) name:MSPlaybackPreferencesDidChangeNotification object:nil];
     [self updateStatusAppearance];
 }
 - (void)viewDidAppear:(BOOL)animated { [super viewDidAppear:animated]; if (!self.prepared && !self.closing) { self.prepared = YES; [self beginPlayback]; } }
@@ -197,8 +219,8 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
     if (visible) [self scheduleHide]; else { [self.hideTimer invalidate]; self.hideTimer = nil; }
 }
 - (void)updateCaptionInsets {
-    self.captionTop.constant = self.controlsVisible ? self.header.bounds.size.height + 4 : 12;
-    self.captionBottom.constant = self.controlsVisible ? -self.footer.bounds.size.height - 4 : -12;
+    self.captionTop.constant = 0;
+    self.captionBottom.constant = 0;
     self.statusBottom.constant=self.controlsVisible?-self.footer.bounds.size.height-12:-20;
 }
 - (void)viewDidLayoutSubviews {
@@ -228,6 +250,13 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
     CGRect picture=MSVideoPictureRect(viewport,natural,self.displayMode ?: @"fit",self.zoomFactor);
     self.videoView.transform=CGAffineTransformMakeScale(picture.size.width/base.size.width,picture.size.height/base.size.height);
     self.appliedVideoSize=viewport;self.sourceVideoSize=natural;
+    CGRect visible=CGRectIntersection(picture,(CGRect){CGPointZero,viewport});
+    if(!CGRectIsNull(visible)&&!CGRectIsEmpty(visible))[self.subtitles updateVideoRect:[self.videoViewport convertRect:visible toView:self.subtitleOverlay]];
+}
+- (void)subtitlePreferencesChanged:(NSNotification *)notification {
+    (void)notification;
+    if(!NSThread.isMainThread){__weak typeof(self) weakSelf=self;dispatch_async(dispatch_get_main_queue(),^{[weakSelf subtitlePreferencesChanged:nil];});return;}
+    if(self.player&&!self.closing)MSVLCApplySubtitleLiveStyle(self.player,MSPlaybackPreferences.sharedPreferences);
 }
 - (void)selectDisplayMode:(NSString *)mode {
     if(![@[@"fit",@"fill",@"stretch",@"16:9",@"4:3",@"1:1",@"2.35:1"] containsObject:mode])return;
@@ -270,24 +299,63 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
     }];
 }
 - (void)beginPlayback {
-    if (self.closing || self.player || self.mediaServicesUnavailable || UIApplication.sharedApplication.applicationState != UIApplicationStateActive) return;
+    if (self.closing || self.player || self.pendingCaptionMedia || self.mediaServicesUnavailable || UIApplication.sharedApplication.applicationState != UIApplicationStateActive) return;
     if(self.waitingForStop) { self.restartAfterStop=YES; self.statusPanel.hidden=NO; self.statusLabel.text=@"Stopping the previous video…"; self.retryButton.hidden=YES; return; }
     if(MSVLCRetirement.pendingCount>=2) { [self fail:@"A previous video has not stopped. Close StremIOS from the app switcher before trying again." code:5]; return; }
     self.generation++; self.ready=NO; self.seekPending=NO; self.sourceSaved=NO; self.restoredAudio=NO; self.retryFromBeginning=NO; self.interrupted=NO; self.lastEngineState=-1;
     self.knownAudioTracks=@[]; self.knownSubtitleTracks=@[]; self.lastObservedTime=0; self.lastAdvanceTime=NSProcessInfo.processInfo.systemUptime; self.lastPersistedAt=0; self.lastDiagnosticAt=0;
     self.statusPanel.hidden=NO; self.statusLabel.text=@"Loading…"; self.retryButton.hidden=YES; self.nextButton.hidden=YES; [self setControlsVisible:YES];
+    self.captionMetadataRequested=NO; self.captionMetadataStatus=0; self.captionSourceHeight=0;
+    VLCMedia *input=[VLCMedia mediaWithURL:self.media.streamURL]; [input addOption:@":network-caching=1500"];
+    if(MSPlaybackPreferences.sharedPreferences.subtitleVerticalOffset<=0.0001) { [self startPlaybackWithInput:input captionHeight:0]; return; }
+    // sub-margin belongs to VLC's video compositor, not UIKit/retina pixels.
+    // Only a non-default position needs this bounded public metadata request.
+    self.captionMetadataRequested=YES; self.captionMetadataStatus=1; self.pendingCaptionMedia=input; input.delegate=self;
+    NSUInteger generation=self.generation; __weak typeof(self) weakSelf=self;
+    self.captionParseTimer=[NSTimer scheduledTimerWithTimeInterval:3 repeats:NO block:^(NSTimer *timer) {
+        typeof(self) self=weakSelf; if(!self || self.captionParseTimer!=timer || self.generation!=generation || self.pendingCaptionMedia!=input)return;
+        [self completeCaptionPreparation:input];
+    }];
+    [self recordStage:@"caption-metadata" code:0];
+    VLCMediaParsingOptions parseOptions=self.media.streamURL.isFileURL?VLCMediaParseLocal:VLCMediaParseNetwork;
+    if([input parseWithOptions:parseOptions timeout:2500]!=0)[self completeCaptionPreparation:input];
+}
+- (void)mediaDidFinishParsing:(VLCMedia *)input {
+    if(!NSThread.isMainThread) { __weak typeof(self) weakSelf=self; dispatch_async(dispatch_get_main_queue(),^{ [weakSelf mediaDidFinishParsing:input]; }); return; }
+    if(input==self.pendingCaptionMedia)[self completeCaptionPreparation:input];
+}
+- (void)completeCaptionPreparation:(VLCMedia *)input {
+    if(input!=self.pendingCaptionMedia)return;
+    double height=0;
+    if(input.parsedStatus==VLCMediaParsedStatusDone) for(NSDictionary *track in input.tracksInformation) {
+        if(![track isKindOfClass:NSDictionary.class] || ![track[VLCMediaTracksInformationType] isEqual:VLCMediaTracksInformationTypeVideo])continue;
+        double value=[track[VLCMediaTracksInformationVideoHeight] doubleValue];
+        if(isfinite(value)&&value>=16&&value<=8192)height=value;
+        break;
+    }
+    [self.captionParseTimer invalidate]; self.captionParseTimer=nil;
+    input.delegate=nil; self.pendingCaptionMedia=nil; [input parseStop];
+    if(self.closing || UIApplication.sharedApplication.applicationState!=UIApplicationStateActive)return;
+    self.captionSourceHeight=height; self.captionMetadataStatus=height>0?2:3;
+    [self startPlaybackWithInput:input captionHeight:height];
+}
+- (void)startPlaybackWithInput:(VLCMedia *)input captionHeight:(double)height {
+    if(self.closing || self.player || UIApplication.sharedApplication.applicationState!=UIApplicationStateActive)return;
     AVAudioSession *audio=AVAudioSession.sharedInstance; NSError *error=nil;
     if (![audio setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeMoviePlayback options:0 error:&error] || ![audio setActive:YES error:&error]) { [self fail:@"Audio could not start. Retry when the iPad is ready." code:1]; return; }
     self.ownsAudioSession=YES; self.audioOwner=MSClaimAudioSession();
     // Never install a console/file logger: engine messages can contain private URLs.
-    NSArray *options=[@[@"--quiet",@"--no-video-title-show",@"--no-osd"] arrayByAddingObjectsFromArray:MSVLCSubtitleOptions(MSPlaybackPreferences.sharedPreferences)];
+    [self applyVideoLayout];
+    NSArray *options=[@[@"--quiet",@"--no-video-title-show",@"--no-osd"] arrayByAddingObjectsFromArray:MSVLCSubtitleOptionsForVideoHeight(MSPlaybackPreferences.sharedPreferences,height)];
     options=[options arrayByAddingObjectsFromArray:MSVLCAdaptiveOptions(MSPlaybackPreferences.sharedPreferences)];
     self.player=[[VLCMediaPlayer alloc] initWithOptions:options];
     self.player.libraryInstance.loggers=nil; self.player.delegate=self; self.player.drawable=self.videoView;
+    MSVLCApplySubtitleLiveStyle(self.player,MSPlaybackPreferences.sharedPreferences);
     self.player.scaleFactor=0;self.player.videoAspectRatio=NULL;self.player.videoCropGeometry=NULL;
-    VLCMedia *input=[VLCMedia mediaWithURL:self.media.streamURL]; [input addOption:@":network-caching=1500"]; self.player.media=input; self.player.audio.muted=YES;
+    self.player.media=input; self.player.audio.muted=YES;
     self.subtitles=[[MSSubtitleController alloc] initWithPlaybackSource:self overlayView:self.subtitleOverlay type:self.media.mediaType ?: @"movie" videoID:self.media.identifier extras:self.media.subtitleExtras ?: @{}];
     [self.subtitles setStreamSourceFingerprint:self.media.sourceFingerprint]; [self.subtitles setStreamSubtitles:self.media.streamSubtitles ?: @[]];
+    [self applyVideoLayout];
     __weak typeof(self) weakSelf=self; NSUInteger generation=self.generation;
     self.startupTimer=[NSTimer scheduledTimerWithTimeInterval:30 repeats:NO block:^(NSTimer *timer) { typeof(self) self=weakSelf; if (!self || self.startupTimer!=timer || self.generation!=generation || self.ready) return; [self fail:@"Video did not start within 30 seconds. Retry playback or return with Done." code:2]; }];
     [self startTickTimer];
@@ -344,6 +412,7 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
     if (!self.resume) [MSLibraryStore.sharedStore clearPositionFor:self.media.identifier];
     self.player.audio.muted=NO; self.playButton.enabled=YES; self.subtitleButton.enabled=YES; self.statusPanel.hidden=YES;
     [self applyVideoLayout];
+    MSVLCApplySubtitleLiveStyle(self.player,MSPlaybackPreferences.sharedPreferences);
     [self refreshTracks]; [self.subtitles restoreSelectionForContentIdentifier:self.media.identifier]; [self recordStage:@"ready" code:0]; [self scheduleHide];
 }
 - (void)tick {
@@ -462,7 +531,7 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
 - (void)subtitleSelectEmbeddedTrackID:(NSInteger)identifier { if(!self.ready || !self.player)return; if(identifier==-1) { self.player.currentVideoSubTitleIndex=-1; return; } for(NSDictionary *track in [self tracksAudio:NO])if([track[@"id"] integerValue]==identifier) { self.player.currentVideoSubTitleIndex=(int)identifier; return; } }
 - (void)persistProgress { if(!self.ready || self.seekPending || !self.player)return; [MSLibraryStore.sharedStore savePosition:self.userSeekPending ? self.userSeekTarget : self.currentTime duration:self.duration for:self.media.identifier]; }
 - (void)inactive:(NSNotification *)note {
-    (void)note; if(self.closing || (!self.player && !self.waitingForStop))return; self.interrupted=YES; self.restartAfterStop=NO; [self tearDownSaving:YES]; self.resume=YES;
+    (void)note; if(self.closing || (!self.player && !self.pendingCaptionMedia && !self.waitingForStop))return; self.interrupted=YES; self.restartAfterStop=NO; [self tearDownSaving:YES]; self.resume=YES;
     self.statusPanel.hidden=NO; self.statusLabel.text=@"Playback paused. Tap Resume playback when you return."; [self.retryButton setTitle:@"Resume playback" forState:UIControlStateNormal]; self.retryButton.hidden=NO; [self setControlsVisible:YES]; [self recordStage:@"inactive" code:0];
 }
 - (void)active:(NSNotification *)note { (void)note; if(!self.closing && self.interrupted) { self.retryButton.enabled=!self.mediaServicesUnavailable; [self setControlsVisible:YES]; } }
@@ -475,13 +544,20 @@ static NSDictionary *MSVLCLastRetirementDiagnostic;
 - (void)retryPlayback { if(self.closing || self.mediaServicesUnavailable)return; BOOL fromBeginning=self.retryFromBeginning; [self tearDownSaving:YES]; self.resume=!fromBeginning; [self beginPlayback]; }
 - (void)recordStage:(NSString *)stage code:(NSInteger)code {
     NSMutableDictionary *report=[@{@"schemaVersion":@2,@"engine":@"vlc",@"stage":stage,@"recordedAt":@(NSDate.date.timeIntervalSince1970),@"generation":@(self.generation),@"engineState":@(self.player ? self.player.state : -1),@"errorClass":@(code),@"ready":@(self.ready),@"seeking":@(self.seekPending),@"currentTimeSeconds":@(self.currentTime),@"durationSeconds":@(self.duration),@"sourceAdvanceRecorded":@(self.sourceSaved)} mutableCopy];
-    if(self.player) { VLCMediaStats stats=self.player.media.statistics; report[@"decodedVideo"]=@(stats.decodedVideo); report[@"displayedPictures"]=@(stats.displayedPictures); report[@"lostPictures"]=@(stats.lostPictures); report[@"decodedAudio"]=@(stats.decodedAudio); report[@"playedAudioBuffers"]=@(stats.playedAudioBuffers); report[@"videoWidth"]=@(self.player.videoSize.width); report[@"videoHeight"]=@(self.player.videoSize.height); }
+    report[@"captionMarginHeight"]=@(self.captionSourceHeight); report[@"captionMetadataStatus"]=@(self.captionMetadataStatus); report[@"captionMetadataFallback"]=@(self.captionMetadataStatus==3);
+    if(self.player) {
+        VLCMediaStats stats=self.player.media.statistics; report[@"decodedVideo"]=@(stats.decodedVideo); report[@"displayedPictures"]=@(stats.displayedPictures); report[@"lostPictures"]=@(stats.lostPictures); report[@"decodedAudio"]=@(stats.decodedAudio); report[@"playedAudioBuffers"]=@(stats.playedAudioBuffers); report[@"videoWidth"]=@(self.player.videoSize.width); report[@"videoHeight"]=@(self.player.videoSize.height);
+        NSInteger selected=self.player.currentVideoSubTitleIndex;report[@"selectedSubtitleID"]=@(selected);report[@"selectedSubtitleCodec"]=selected<0?@"off":@"unknown";
+        NSMutableArray *codecs=[NSMutableArray array];for(NSDictionary *track in self.player.media.tracksInformation){if(codecs.count>=32)break;if(![track isKindOfClass:NSDictionary.class]||![track[VLCMediaTracksInformationType] isEqual:VLCMediaTracksInformationTypeText])continue;NSNumber *identifier=[track[VLCMediaTracksInformationId] isKindOfClass:NSNumber.class]?track[VLCMediaTracksInformationId]:@(-1);NSString *name=MSVLCCaptionCodecName(track[VLCMediaTracksInformationCodec]);[codecs addObject:@{@"id":identifier,@"codec":name}];if(identifier.integerValue==selected)report[@"selectedSubtitleCodec"]=name;}report[@"subtitleCodecs"]=codecs;
+    }
     NSData *data=[NSJSONSerialization dataWithJSONObject:report options:0 error:nil]; NSURL *cache=[NSFileManager.defaultManager URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask].firstObject;
     if(cache && data.length && data.length<=4096) { [NSFileManager.defaultManager createDirectoryAtURL:cache withIntermediateDirectories:YES attributes:nil error:nil]; [data writeToURL:[cache URLByAppendingPathComponent:@"MiniStreamPlaybackState.json"] options:NSDataWritingAtomic error:nil]; if(code)[data writeToURL:[cache URLByAppendingPathComponent:@"MiniStreamLastPlaybackFailure.json"] options:NSDataWritingAtomic error:nil]; }
 }
 - (void)tearDownSaving:(BOOL)save {
     if(save)[self persistProgress]; self.generation++; self.ready=NO; self.seekPending=NO; self.scrubbing=NO; self.userSeekPending=NO; self.showingBuffering=NO;
     [self.startupTimer invalidate]; self.startupTimer=nil; [self.tickTimer invalidate]; self.tickTimer=nil; [self.hideTimer invalidate]; self.hideTimer=nil;
+    [self.captionParseTimer invalidate]; self.captionParseTimer=nil;
+    VLCMedia *pending=self.pendingCaptionMedia; self.pendingCaptionMedia=nil; if(pending) { pending.delegate=nil; [pending parseStop]; self.captionMetadataStatus=4; }
     [self.subtitles invalidate]; self.subtitles=nil; [self.audioPicker dismissViewControllerAnimated:NO completion:nil]; self.audioPicker=nil;
     VLCMediaPlayer *old=self.player; self.player=nil;
     if(old) {

@@ -1,6 +1,8 @@
 #import "MSStream.h"
 #import "MSHTTPClient.h"
 #import "MSLibraryStore.h"
+#import "MSAddons.h"
+#import "MSProviderURLRepair.h"
 static NSString *MSText(id value, NSUInteger limit) { if (![value isKindOfClass:NSString.class]) return @""; return [value length] > limit ? [value substringToIndex:limit] : value; }
 static BOOL MSHasLabel(NSString *labels, NSString *pattern) {
     static NSCache<NSString *,NSRegularExpression *> *expressions; static dispatch_once_t once;
@@ -15,6 +17,16 @@ static NSString *MSRedactAddresses(NSString *text) {
     return [addresses stringByReplacingMatchesInString:text options:0 range:NSMakeRange(0,text.length) withTemplate:@"[private link]"];
 }
 @implementation MSStream
++ (instancetype)streamWithDictionary:(NSDictionary *)raw addon:(MSAddon *)addon {
+    if (![raw isKindOfClass:NSDictionary.class] || !addon) return nil;
+    NSString *text = [raw[@"url"] isKindOfClass:NSString.class] && [raw[@"url"] length] <= 16384 ? raw[@"url"] : nil;
+    NSURL *original = text.length ? [NSURL URLWithString:text] : nil;
+    NSURL *restored = MSRestoreMediaFusionPlaybackURL(original,addon.manifestURL,addon.identifier);
+    if (restored && ![restored isEqual:original]) {
+        NSMutableDictionary *copy = [raw mutableCopy]; copy[@"url"] = restored.absoluteString; raw = copy;
+    }
+    return [self streamWithDictionary:raw addonName:addon.name addonIdentifier:addon.identifier];
+}
 + (instancetype)streamWithDictionary:(NSDictionary *)raw addonName:(NSString *)addon {
     return [self streamWithDictionary:raw addonName:addon addonIdentifier:addon];
 }

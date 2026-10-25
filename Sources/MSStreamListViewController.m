@@ -167,7 +167,7 @@ static NSString *const MSCompatibleFilterKey = @"MiniStream.sourceFilter.compati
             self.pending--; self.activeRequests--; if (error || ![data[@"streams"] isKindOfClass:NSArray.class]) self.failures++;
             NSArray *rows = [data[@"streams"] isKindOfClass:NSArray.class] ? data[@"streams"] : @[];
             NSUInteger perAddon = 0;
-            for (id raw in rows) { if (self.streams.count >= 500 || perAddon++ >= 100) break; MSStream *stream = [MSStream streamWithDictionary:raw addonName:addon.name addonIdentifier:addon.identifier]; if (stream) [self.streams addObject:stream]; }
+            for (id raw in rows) { if (self.streams.count >= 500 || perAddon++ >= 100) break; MSStream *stream = [MSStream streamWithDictionary:raw addon:addon]; if (stream) [self.streams addObject:stream]; }
             if (!self.pending) { self.loaded = YES; [self.refreshControl endRefreshing]; [self.requests removeAllObjects]; }
             [self applyFilters]; [self startNextRequests]; [self completeExactResumeIfReady];
         }]; [self.requests addObject:request];

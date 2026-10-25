@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
                                extras:(NSDictionary<NSString *, NSString *> *)extras;
 /// Refresh a non-AVPlayer source after its embedded track list changes.
 - (void)refreshEmbeddedTracks;
+/// Visible picture intersection, expressed in overlay coordinates. Keeps
+/// external captions within the video rather than its letterbox bars.
+- (void)updateVideoRect:(CGRect)rect;
 - (void)presentFromViewController:(UIViewController *)viewController;
 /// Set before stream subtitles/restoration. A missing fingerprint keeps source
 /// caption choices session-only; playback addresses are never used as identity.

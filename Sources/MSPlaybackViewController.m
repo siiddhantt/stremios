@@ -165,8 +165,8 @@ static NSString *MSSafeWaitingReason(AVPlayerWaitingReason reason) {
     if(visible)[self scheduleHide];else{[self.hideTimer invalidate];self.hideTimer=nil;}
 }
 - (void)updateCaptionInsets {
-    self.captionTop.constant=self.controlsVisible?self.header.bounds.size.height+4:12;
-    self.captionBottom.constant=self.controlsVisible?-self.footer.bounds.size.height-4:-12;
+    self.captionTop.constant=0;
+    self.captionBottom.constant=0;
     self.statusBottom.constant=self.controlsVisible?-self.footer.bounds.size.height-12:-20;
 }
 - (void)viewDidLayoutSubviews {
@@ -187,6 +187,8 @@ static NSString *MSSafeWaitingReason(AVPlayerWaitingReason reason) {
     CGRect picture=MSVideoPictureRect(viewport,natural,self.displayMode?:@"fit",self.zoomFactor);
     self.videoView.transform=CGAffineTransformMakeScale(picture.size.width/base.size.width,picture.size.height/base.size.height);
     self.appliedVideoSize=viewport;self.sourceVideoSize=natural;
+    CGRect visible=CGRectIntersection(picture,(CGRect){CGPointZero,viewport});
+    if(!CGRectIsNull(visible)&&!CGRectIsEmpty(visible))[self.subtitleController updateVideoRect:[self.videoViewport convertRect:visible toView:self.subtitleOverlay]];
 }
 - (void)selectDisplayMode:(NSString *)mode {
     if(![@[@"fit",@"fill",@"stretch",@"16:9",@"4:3",@"1:1",@"2.35:1"] containsObject:mode])return;
@@ -323,6 +325,7 @@ static NSString *MSSafeWaitingReason(AVPlayerWaitingReason reason) {
     self.subtitleController = [[MSSubtitleController alloc] initWithPlayer:self.player overlayView:self.subtitleOverlay type:self.media.mediaType ?: @"movie" videoID:[self.media.identifier isEqualToString:@"demo:big-buck-bunny"] ? @"tt1254207" : self.media.identifier extras:self.media.subtitleExtras ?: @{}];
     [self.subtitleController setStreamSourceFingerprint:self.media.sourceFingerprint];
     [self.subtitleController setStreamSubtitles:self.media.streamSubtitles ?: @[]];
+    [self applyVideoLayout];
     [self.item addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:MSItemStatusContext];
     self.observingItem = YES;
     [self.item addObserver:self forKeyPath:@"duration" options:NSKeyValueObservingOptionNew context:MSItemDurationContext];

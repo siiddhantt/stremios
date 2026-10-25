@@ -5,7 +5,67 @@
 #import <math.h>
 static unsigned checks, failures;
 static void check(BOOL value, const char *name) { checks++; if (!value) { failures++; fprintf(stderr,"FAIL playback preferences: %s\n",name); } }
+@interface MSTextRendererProbe : NSObject
+@property(nonatomic,copy) NSString *font;
+@property(nonatomic,strong) NSNumber *size,*color,*bold;
+@property(nonatomic) NSUInteger writes;
+@end
+@implementation MSTextRendererProbe
+- (void)setTextRendererFont:(NSString *)font {self.font=font;self.writes++;}
+- (void)setTextRendererFontSize:(NSNumber *)size {self.size=size;self.writes++;}
+- (void)setTextRendererFontColor:(NSNumber *)color {self.color=color;self.writes++;}
+- (void)setTextRendererFontForceBold:(NSNumber *)bold {self.bold=bold;self.writes++;}
+@end
+static void testOffsetShadowAndArial(void) {
+    NSString *suite=[@"local.ministream.subtitle-position-test." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *defaults=[[NSUserDefaults alloc]initWithSuiteName:suite];[defaults removePersistentDomainForName:suite];
+    NSString *key=@"MiniStream.PlaybackPreferences.v1";
+    MSPlaybackPreferences *p=[[MSPlaybackPreferences alloc]initWithDefaults:defaults];
+    __block NSUInteger notices=0;id observer=[NSNotificationCenter.defaultCenter addObserverForName:MSPlaybackPreferencesDidChangeNotification object:p queue:nil usingBlock:^(NSNotification *note){(void)note;notices++;}];
+    check(p.subtitleVerticalOffset==0&&!p.subtitleShadowEnabled,"new offset and shadow defaults");
+    p.subtitleVerticalOffset=0;p.subtitleShadowEnabled=NO;check(notices==0,"unchanged offset and explicit shadow do not notify");
+    check([defaults dictionaryForKey:key][@"shadowEnabled"]!=nil,"explicit shadow intent stored even when matching fallback");
+    p.style=@"white-shadow";check(!p.subtitleShadowEnabled,"explicit shadow off survives clear-background preset");
+    [defaults setObject:@{@"style":@"white-shadow",@"position":@"top"} forKey:key];
+    check(p.subtitleShadowEnabled&&p.subtitleVerticalOffset==0&&[p.position isEqual:@"top"],"legacy white-shadow migrates without reinterpreting location");
+    NSUInteger before=notices;p.subtitleShadowEnabled=YES;check(notices==before,"pinning unchanged legacy shadow is silent");
+    p.style=@"white-dark";check(p.subtitleShadowEnabled,"shadow stays enabled independently of dark background");
+    p.subtitleVerticalOffset=0.25;p.fontFamily=@"arial";p.subtitleFontWeight=@"bold";
+    MSPlaybackPreferences *reload=[[MSPlaybackPreferences alloc]initWithDefaults:defaults];
+    check(reload.subtitleVerticalOffset==0.25&&reload.subtitleShadowEnabled&&[reload.fontFamily isEqual:@"arial"]&&[reload.subtitleFontWeight isEqual:@"bold"],"offset shadow and Arial persist across instances");
+    check([reload.position isEqual:@"top"],"new appearance setters preserve legacy location field");
+    before=notices;p.subtitleVerticalOffset=0.25;p.subtitleShadowEnabled=YES;check(notices==before,"repeated normalized new values do not notify");
+    p.subtitleVerticalOffset=2;check(p.subtitleVerticalOffset==0.5,"offset upper clamp");
+    before=notices;p.subtitleVerticalOffset=8;check(notices==before,"same upper clamp does not notify");
+    p.subtitleVerticalOffset=-2;check(p.subtitleVerticalOffset==-0.05,"offset lower clamp");
+    p.subtitleVerticalOffset=NAN;check(p.subtitleVerticalOffset==0,"offset NaN resets to default");
+    before=notices;p.subtitleVerticalOffset=INFINITY;p.subtitleVerticalOffset=-INFINITY;check(p.subtitleVerticalOffset==0&&notices==before,"infinite offset safely defaults without duplicate notification");
+    p.subtitleVerticalOffset=-0.05;check(p.subtitleVerticalOffset==-0.05,"offset lower inclusive");
+    p.subtitleVerticalOffset=0.5;check(p.subtitleVerticalOffset==0.5,"offset upper inclusive");
+    for(id bad in @[@"0.25",@[],@{},@YES,@(NAN),@(INFINITY)]){
+        [defaults setObject:@{@"verticalOffset":bad} forKey:key];check(p.subtitleVerticalOffset==0,"malformed saved offset safely defaults");
+    }
+    [defaults setObject:@{@"verticalOffset":@8} forKey:key];check(p.subtitleVerticalOffset==0.5,"stored offset upper clamp");
+    [defaults setObject:@{@"verticalOffset":@(-8)} forKey:key];check(p.subtitleVerticalOffset==-0.05,"stored offset lower clamp");
+    for(id bad in @[@"YES",@[],@{},@2,@(-1),@0.25,@(NAN),@(INFINITY)]){
+        [defaults setObject:@{@"shadowEnabled":bad,@"style":@"white-shadow"} forKey:key];check(p.subtitleShadowEnabled,"invalid saved shadow uses legacy fallback");
+        [defaults setObject:@{@"shadowEnabled":bad,@"style":@"yellow-dark"} forKey:key];check(!p.subtitleShadowEnabled,"invalid saved shadow does not enable on dark presets");
+    }
+    [defaults setObject:@{@"shadowEnabled":@0,@"style":@"white-shadow"} forKey:key];check(!p.subtitleShadowEnabled,"numeric false explicitly overrides legacy shadow");
+    [defaults setObject:@{@"shadowEnabled":@1,@"style":@"white-dark"} forKey:key];check(p.subtitleShadowEnabled,"numeric true enables shadow with dark background");
+    [defaults setObject:@{@"fontFamily":@"arial"} forKey:key];check([p.fontFamily isEqual:@"arial"]&&[p.subtitleFontWeight isEqual:@"regular"],"Arial defaults to available regular weight");
+    [defaults setObject:@{@"verticalOffset":@0.4,@"shadowEnabled":@YES,@"fontFamily":@"arial",@"position":@"middle",@"quality":@"1080p",@"audioLanguage":@"hin",@"subtitleLanguage":@"eng",@"extension-field":@"keep"} forKey:key];
+    [defaults setObject:@"keep" forKey:@"unrelated"];before=notices;[p resetSubtitleAppearance];
+    check(notices==before+1&&p.subtitleVerticalOffset==0&&!p.subtitleShadowEnabled&&[p.fontFamily isEqual:@"system"],"reset restores new appearance defaults with one notice");
+    NSDictionary *remaining=[defaults dictionaryForKey:key];check(!remaining[@"verticalOffset"]&&!remaining[@"shadowEnabled"]&&!remaining[@"fontFamily"],"reset removes new appearance keys");
+    check([remaining[@"quality"] isEqual:@"1080p"]&&[remaining[@"audioLanguage"] isEqual:@"hin"]&&[remaining[@"subtitleLanguage"] isEqual:@"eng"]&&[remaining[@"extension-field"] isEqual:@"keep"]&&[[defaults objectForKey:@"unrelated"] isEqual:@"keep"],"reset preserves playback and unrelated defaults");
+    before=notices;[p resetSubtitleAppearance];check(notices==before,"repeat reset stays silent");
+    [defaults setObject:@[@1] forKey:key];check(p.subtitleVerticalOffset==0&&!p.subtitleShadowEnabled,"malformed root uses safe new defaults");
+    p.subtitleShadowEnabled=YES;p.subtitleVerticalOffset=0.12;check(p.subtitleShadowEnabled&&p.subtitleVerticalOffset==0.12,"new setters repair malformed root");
+    [NSNotificationCenter.defaultCenter removeObserver:observer];[defaults removePersistentDomainForName:suite];
+}
 int main(void) { @autoreleasepool {
+    testOffsetShadowAndArial();
     NSString *suite = [@"local.ministream.preferences-test." stringByAppendingString:NSUUID.UUID.UUIDString];
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:suite];
     [defaults removePersistentDomainForName:suite];
@@ -80,7 +140,25 @@ int main(void) { @autoreleasepool {
     check([vlc containsObject:@"--freetype-font=Georgia"]&&[vlc containsObject:@"--no-freetype-bold"],"VLC serif regular maps no forced bold");
     check([vlc containsObject:@"--freetype-rel-fontsize=10"]&&[vlc containsObject:@"--freetype-background-opacity=0"],"VLC large size and shadow without backplate");
     p.fontFamily=@"monospace";p.subtitleFontWeight=@"medium";p.subtitleFontSize=14;vlc=MSVLCSubtitleOptions(p);check([vlc containsObject:@"--freetype-font=Menlo"]&&[vlc containsObject:@"--no-freetype-bold"]&&[vlc containsObject:@"--freetype-rel-fontsize=27"],"VLC monospace medium and minimum size");
-    p.subtitleFontWeight=@"bold";vlc=MSVLCSubtitleOptions(p);check([vlc containsObject:@"--freetype-bold"]&&[vlc containsObject:@"--freetype-outline-color=0"]&&[vlc containsObject:@"--freetype-outline-opacity=255"]&&[vlc containsObject:@"--freetype-outline-thickness=2"]&&vlc.count==10,"VLC forced bold and bounded outline option set");
+    p.subtitleFontWeight=@"bold";vlc=MSVLCSubtitleOptions(p);check([vlc containsObject:@"--freetype-bold"]&&[vlc containsObject:@"--freetype-outline-color=0"]&&[vlc containsObject:@"--freetype-outline-opacity=255"]&&[vlc containsObject:@"--freetype-outline-thickness=2"]&&vlc.count==14,"VLC forced bold and bounded outline option set");
+    [p resetSubtitleAppearance];vlc=MSVLCSubtitleOptions(p);check([vlc containsObject:@"--freetype-shadow-opacity=0"],"VLC default shadow explicitly disabled");
+    p.fontFamily=@"arial";p.subtitleShadowEnabled=YES;vlc=MSVLCSubtitleOptions(p);
+    check([vlc containsObject:@"--freetype-font=Arial"]&&[vlc containsObject:@"--freetype-background-opacity=180"]&&[vlc containsObject:@"--freetype-shadow-opacity=128"],"VLC Arial and independent shadow with dark background");
+    check([vlc containsObject:@"--freetype-shadow-color=0"]&&[vlc containsObject:@"--freetype-shadow-angle=-45"]&&[vlc containsObject:@"--freetype-shadow-distance=0.06"],"VLC shadow geometry explicitly bounded");
+    p.style=@"white-shadow";p.subtitleShadowEnabled=NO;vlc=MSVLCSubtitleOptions(p);check([vlc containsObject:@"--freetype-shadow-opacity=0"]&&[vlc containsObject:@"--freetype-background-opacity=0"],"VLC transparent background does not force shadow on");
+    check([MSVLCSubtitleOptionsForVideoHeight(p,720) containsObject:@"--sub-margin=0"],"VLC default keeps native subtitle position");
+    p.subtitleVerticalOffset=.25;check([MSVLCSubtitleOptionsForVideoHeight(p,720) containsObject:@"--sub-margin=180"],"VLC positive offset raises720 captions");
+    p.subtitleVerticalOffset=-.05;check([MSVLCSubtitleOptionsForVideoHeight(p,720) containsObject:@"--sub-margin=0"],"VLC lower offset clamps within video");
+    p.subtitleVerticalOffset=-.01;check([MSVLCSubtitleOptionsForVideoHeight(p,720) containsObject:@"--sub-margin=0"],"VLC a small negative offset never raises native bottom captions");
+    p.subtitleVerticalOffset=.25;
+    for(NSNumber *height in @[@0,@(-1),@15,@8193,@(NAN),@(INFINITY),@(-INFINITY)])
+        check([MSVLCSubtitleOptionsForVideoHeight(p,height.doubleValue) containsObject:@"--sub-margin=0"],"VLC requested offset with unknown or unsupported dimensions keeps native position");
+    check([MSVLCSubtitleOptionsForVideoHeight(p,360) containsObject:@"--sub-margin=90"],"VLC offset scales with actual360 source height");
+    check([MSVLCSubtitleOptionsForVideoHeight(p,1080) containsObject:@"--sub-margin=270"],"VLC offset scales with actual1080 source height");
+    p.subtitleVerticalOffset=0;check([MSVLCSubtitleOptionsForVideoHeight(p,NAN) containsObject:@"--sub-margin=0"],"VLC default with missing dimensions keeps native position");
+    p.subtitleColorHex=@"82C9FF";p.subtitleFontWeight=@"bold";p.subtitleFontSize=40;MSTextRendererProbe *renderer=[MSTextRendererProbe new];
+    check(MSVLCApplySubtitleLiveStyle(renderer,p)&&renderer.writes==4&&[renderer.font isEqual:@"Arial"]&&renderer.size.integerValue==10&&renderer.color.unsignedIntValue==8571391&&renderer.bold.boolValue,"guarded live adapter applies exact chosen font size color and bold values");
+    check(!MSVLCApplySubtitleLiveStyle(nil,p)&&!MSVLCApplySubtitleLiveStyle([NSObject new],p),"missing pinned renderer selectors safely decline live styling");
     p.playbackQuality=@"auto";check(MSVLCAdaptiveOptions(p).count==0,"automatic quality leaves adaptive selection unrestricted");
     p.playbackQuality=@"720p";check([MSVLCAdaptiveOptions(p) isEqual:@[@"--adaptive-maxwidth=1280",@"--adaptive-maxheight=720"]],"720p maps to pinned VLC rendition limits");
     p.playbackQuality=@"1080p";check([MSVLCAdaptiveOptions(p) isEqual:@[@"--adaptive-maxwidth=1920",@"--adaptive-maxheight=1080"]],"1080p maps to pinned VLC rendition limits");
