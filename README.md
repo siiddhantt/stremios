@@ -4,102 +4,114 @@
 
 <h1 align="center">StremIOS</h1>
 
-<p align="center">An independent, native Stremio-compatible client for older iPads.</p>
-<p align="center">Cinematic browsing. Familiar controls. No browser engine.</p>
+<p align="center"><strong>Native streaming. A new life for older iPads.</strong></p>
+<p align="center">An independent Stremio-compatible client with cinematic browsing and familiar playback controls.</p>
 
 <p align="center">
   <a href="#features">Features</a> ·
-  <a href="#set-up">Set up</a> ·
-  <a href="#build-from-source">Build from source</a> ·
-  <a href="#compatibility">Compatibility</a>
+  <a href="#get-started">Get started</a> ·
+  <a href="#build">Build</a> ·
+  <a href="https://github.com/siiddhantt/stremios/issues">Feedback</a>
 </p>
 
 <p align="center">
-  <img src="assets/title-landscape.png" width="920" alt="StremIOS title page in landscape, with full-width artwork fading into a dark interface and a prominent Play button" />
+  <img src="assets/title-landscape.png" width="920" alt="StremIOS on an iPad: full-width title artwork fading into a dark interface, with title information and playback controls" />
 </p>
+
+<p align="center"><sub>Captured on an iPad mini 2 running iOS 12.5.8.</sub></p>
 
 <details>
-<summary>Made for portrait, too</summary>
+<summary>See the portrait layout</summary>
 
 <p align="center">
-  <img src="assets/title-portrait.png" width="420" alt="The same native title page in portrait, with fitted artwork, description and Play button" />
+  <img src="assets/title-portrait.png" width="420" alt="StremIOS title page adapted to portrait, with artwork, description and Play button" />
 </p>
 
 </details>
 
-<p align="center"><sub>Title view captured on an iPad mini 2. Illustrative title artwork belongs to its respective owners.</sub></p>
-
 ## Features
 
-- **Browse beautifully.** Discover movies and series through a compact catalog picker, with search and filters supplied by your installed add-ons. Cinematic title pages place Back and Save over edge-to-edge artwork, with seasons, episodes, IMDb ratings and optional logos. A stable fallback keeps titles readable when artwork fails.
-- **Pick up where you left off.** Continue watching, Saved and History stay on your device. Resume looks for the previously selected source without storing an expiring playback URL.
-- **One player interface.** Native HLS playback and VideoLAN for supported MP4/MKV sources share the same controls: audio, captions, seeking, picture size and pinch to zoom.
-- **Make it yours.** Accent colours, caption appearance and timing, language preferences and bounded artwork storage. No analytics or background video downloads.
-- **Bring your add-ons.** Add compatible manifest URLs in Settings. Sources resolve only after an explicit Play or Resume; browsing never starts a media download.
+| Feature | Included |
+| :--- | :--- |
+| **Discover** | Artwork, title logos, IMDb ratings, seasons and episodes. Search and filter catalogs from your add-ons. |
+| **Watch** | VideoLAN and native HLS playback, audio tracks, subtitles, tap-to-seek and pinch-to-zoom controls. |
+| **Continue** | Save titles and resume your previous source. Library and viewing history stay on your device. |
+| **Personalise** | Accent colours, subtitle styling, language preferences and a clearable artwork cache. |
 
-## Set up
+No browser engine, analytics or background video downloads.
 
-After installing your build, open **Settings → Add-ons**:
+## Get started
 
-- **Configured add-on link:** paste your provider's configured `https://` or `stremio://` manifest link. StremIOS checks the manifest before saving it; add-ons that require configuration guide you back to their provider.
-- **Connect TorBox:** validate an API key directly with TorBox, then choose whether to share it with **Torrentio**, a separate service. Nothing is sent to Torrentio until you confirm that connection.
+> **Source-only preview.** No public IPA or Sileo package yet. Binary releases are pending the playback dependency's redistribution audit. Developers can [build below](#build).
 
-In **Discover**, use the compact Movies/Series buttons, catalog selector and Filters. Catalogs are grouped by add-on; tap outside a catalog or filter sheet to close it without applying changes. Filters come from that catalog's manifest—Hindi appears when the provider offers a language list containing it. Search stays available in every catalog. If a catalog cannot search, StremIOS uses a search catalog from the same provider or Cinemeta and shows the search scope; clearing the query restores your browsing filters. Clear resets the selected filters. Compatible catalogs, metadata, sources and subtitles are supported, not every Stremio add-on feature. Connections and viewing history stay local; there is no Stremio account sync.
+Once installed:
 
-## Build from source
+1. Open **Settings → Add-ons** and paste a configured `https://` or `stremio://` manifest link.
+2. For TorBox, use **Connect TorBox**. Sharing your key with Torrentio, a separate provider, requires confirmation.
+3. Choose a catalog in **Discover**, open a title and select a source.
 
-**This initial public release is source-only.** There is no ready-to-install IPA or bundled VideoLAN framework in this repository. Public binary distribution is held until the corresponding-source package is complete.
+Catalogs, filters and content come from your providers. Compatible metadata, source and subtitle add-ons are supported; Stremio account sync is not included. StremIOS supplies no films or subscriptions.
 
-Requires macOS, **full Xcode with iOS platform support**, Python 3.9+ and Git. Command Line Tools alone are insufficient. Complete Xcode's first-launch setup before building.
+## Compatibility
+
+| Device & media | Support |
+| :--- | :--- |
+| **Target** | arm64 iPads, iOS 12 and later. No iPhone build. |
+| **Tested** | iPad mini 2 · iOS 12.5.8 · AppSync installation. Other devices and stock-device signing remain unverified. |
+| **Recommended on mini 2** | 720p or 1080p H.264. HEVC, AV1 and 4K/HDR are outside the intended playback path. |
+
+<details>
+<summary>Playback and subtitle limits</summary>
+
+- No torrent engine, transcoder or DRM bypass. A resolution preference cannot convert an incompatible file; provider links can expire or fail.
+- External SRT/WebVTT captions support font, weight, colour, shadow, vertical offset and timing.
+- Plain-text VideoLAN captions support live font, size, colour and weight changes. Reopen playback for shadow, background or position changes.
+- Native HLS, styled ASS and bitmap subtitles may retain their own appearance. Embedded captions can crop when zoomed.
+
+</details>
+
+## Build
+
+Requires macOS, **full Xcode with iOS platform support**, Python 3.9+ and Git. Complete Xcode's first-launch setup; Command Line Tools alone are insufficient.
 
 ```sh
 git clone https://github.com/siiddhantt/stremios.git
 cd stremios
-
-# Select your installed Xcode for this shell, if needed.
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-
-# Fetch and verify the pinned playback dependency and source archives.
 python3 Vendor/MobileVLCKit/fetch-vlckit.py --sources
-
-# Build an arm64 iPad app without downloading a simulator.
 MS_LAUNCH_MODE=static-ipad12 ./scripts/build.sh
 ```
 
-The IPA is written to `build/StremIOS-iOS12.ipa`; downloaded dependencies stay in `.cache/vlckit/`. The build explicitly targets iOS 12.0. The static launch option supports all four iPad orientations but opts out of Split View and Slide Over. Omit `MS_LAUNCH_MODE` for the default storyboard launch path.
+Output: `build/StremIOS-iOS12.ipa`. Dependencies: `.cache/vlckit/`.
 
-The current script **ad-hoc signs** the app and framework. The tested installation uses AppSync on a jailbroken iPad. A stock-device installation would need valid Apple signing and provisioning for both; that route is not automated or validated here. StremIOS itself requests no root, JIT or debugger entitlements. Upgrades retain the original bundle identifier and storage keys to preserve existing libraries and add-on connections.
+The script **ad-hoc signs** the app for the tested AppSync route. Stock iPads need valid Apple signing and provisioning, which this script does not provide. The app requests no root, JIT or debugger entitlements.
 
 <details>
-<summary>Checks and custom build locations</summary>
+<summary>Build options and checks</summary>
+
+The static launch option supports all four orientations, but disables Split View and Slide Over. Omit `MS_LAUNCH_MODE` for the default storyboard launch path.
 
 ```sh
-python3 tests/validate_project.py
-python3 tests/test_launch_assets.py
-
-# Optional: fail if the iPhoneOS SDK is unavailable.
 python3 tests/validate_project.py --require-sdk
+python3 tests/test_launch_assets.py
+```
 
-# Optional: use another dependency cache and output directory.
+These are host checks, not device playback tests. Pass `--fixtures-only` to validate offline protocol fixtures, or `--app /path/to/StremIOS.app` to inspect a build.
+
+For custom locations:
+
+```sh
 python3 Vendor/MobileVLCKit/fetch-vlckit.py --cache /absolute/cache --sources
 MS_VLCKIT_FRAMEWORK=/absolute/cache/arm64/MobileVLCKit.framework \
   MS_LAUNCH_MODE=static-ipad12 ./scripts/build.sh /absolute/build-output
 ```
 
-These are host checks, not device-playback tests. `--fixtures-only` validates the offline protocol fixtures; `--app /path/to/StremIOS.app` also inspects a built app without installing it.
-
 </details>
 
-## Compatibility
+## Privacy & license
 
-StremIOS targets **arm64 iPads on iOS 12 or later**; the tested device is an iPad mini 2 running iOS 12.5.8. It is an iPad app, not an iPhone build. Start with 720p or 1080p H.264 on this hardware. HEVC, AV1, 4K/HDR and demanding codecs are outside the intended path; provider delivery can still fail for otherwise supported files.
+History and preferences stay local. Configured add-on links may contain credentials; they are stored with iOS Complete Data Protection and excluded from backups. Privileged jailbreak software can still access app data. When [reporting a bug](https://github.com/siiddhantt/stremios/issues), include your device, iOS version and media format—never keys or private stream URLs.
 
-External SRT/WebVTT captions stay within the visible picture and support font, weight, colour, shadow, vertical offset and timing controls. Arial is available without an additional font download. Plain-text VideoLAN captions update font, size, colour and weight during playback; reopen the video for shadow, background or position changes. A custom embedded position uses a bounded media-dimensions check, falling back to the native bottom position when dimensions are unavailable. Native HLS, authored ASS and bitmap captions may retain their own appearance, and embedded captions can crop when zoomed. Adaptive-quality preferences do not transcode fixed files.
+App code: **[MIT](LICENSE)**, © Siddhant Rai. MobileVLCKit 3.7.4 and other dependencies retain their own licenses. The source fetcher does not yet collect every dependency archive; see the [dependency recipe](Vendor/MobileVLCKit/BUILDING.txt) and [third-party notices](Resources/ThirdPartyNotices.txt) before redistributing binaries.
 
-There is no torrent engine, transcoder, DRM bypass or Stremio account sync. Add-ons provide their own content; StremIOS includes no films or streaming subscription. This is an independent project, unaffiliated with Stremio. Report reproducible problems through [Issues](https://github.com/siiddhantt/stremios/issues), including the iPad model, iOS version and media format—never private source URLs or credentials.
-
-## Privacy and license
-
-History and preferences are local. Configured add-on URLs may contain credentials; they use a private, backup-excluded file with iOS Complete Data Protection. Keep them out of commits, screenshots and issue reports. This protection does not isolate data from privileged jailbreak software.
-
-App code is [MIT licensed](LICENSE), © Siddhant Rai. Third-party code and illustrative artwork retain their own licenses. StremIOS dynamically links **MobileVLCKit 3.7.4**; the fetcher's `--sources` option includes verified VLCKit/VLC source archives and patches, but not every contrib dependency archive. It is not a complete offline corresponding-source package or a byte-identical rebuild claim. See the [dependency recipe](Vendor/MobileVLCKit/BUILDING.txt) and [third-party notices](Resources/ThirdPartyNotices.txt) before redistributing binaries.
+<p align="center"><sub>Independent project, unaffiliated with Stremio. Title artwork belongs to its respective owners.</sub></p>
