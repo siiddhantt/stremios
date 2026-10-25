@@ -1,0 +1,102 @@
+StremIOS 0.8.3 — source availability and library replacement
+=========================================================
+
+Release: https://github.com/siiddhantt/stremios/releases/tag/v0.8.3-beta.1
+Application source: https://github.com/siiddhantt/stremios/tree/v0.8.3-beta.1
+Dependency source asset: StremIOS-0.8.3-beta.1-playback-sources.tar.xz
+
+The application is MIT licensed. MobileVLCKit/libVLC and their components keep
+their respective licenses, including LGPL and permissive licenses. The release
+includes THIRD-PARTY-NOTICES.txt; the app's Settings also displays these notices.
+Recipients may modify/replace the libraries and reverse-engineer the application
+as needed to debug those modifications. No publisher signing key is needed to
+build a modified application; installation requires signing accepted by the
+recipient's device. No approval from this project's author is required.
+
+What this source bundle contains
+-------------------------------
+* VLCKit 2c06f8f64ce6e8f48fd25337079a6051e0ca9bdd, unchanged source archive.
+* VLC 6de05adcbaf2e8b85fe86aad4169393098628119, unchanged source archive.
+* All 42 upstream VLCKit patches, included in the wrapper source archive.
+* The 48 archives selected by that pinned iOS arm64 contrib recipe, with the
+  documented libmysofa source-only repack described below.
+* Component copyright/license notices, checksums, binary evidence, original
+  source URLs and scripts used for preparing these sources.
+
+The original arm64 framework is the official MobileVLCKit 3.7.4 release. Its
+SHA256 before signing is f6e419aac2bfec8854792165772a2fe9af6a0ad121cac4eda05d70983334968b.
+StremIOS does not modify its code: it selects the existing arm64 slice and signs
+it. The binary reports libVLC 3.0.24 / changeset 3.0.24-42-gcdceca9c6f. The source
+pin, 42 patches, 23 matching public headers and component version strings support
+the correspondence. No byte-for-byte rebuild is claimed; timestamps, generated
+commit IDs and Apple toolchain differences can change binary hashes.
+
+The 48-package set is the complete dependency selection reconstructed from the
+pinned recipe. Binary symbols/strings positively identify 45 packages; upnp,
+speexdsp and header-only utfcpp are retained conservatively as build inputs.
+Nested components such as KissFFT, LZ4, xxHash, cJSON and MbedTLS remain in their
+parent source archives and have separate notices. Tools/tests/examples inside
+these source archives are not all linked into the application. Their source
+licenses do not describe the license of the entire application.
+
+libmysofa packaging change
+-------------------------
+The 200 MB original libmysofa 1.2.1 archive consists mainly of acoustic test
+datasets. The pinned recipe uses BUILD_TESTS=OFF. This bundle omits the unused
+tests/ datasets and Windows prebuilt material; it retains all library C source,
+headers, build scripts, source tests, license files and installed share/ data.
+The MIT KEMAR data license is retained. Library code is unchanged. An exact
+omission list and hashes for every retained regular file are provided in
+manifests/mysofa-source-repack.json. prepare-bundled-sources.py updates only the
+recipe's archive checksum for this repack. The original archive's URL/SHA512
+remain available in contrib-sources.json if you want its unrelated datasets.
+
+Preparing/rebuilding the dependency
+----------------------------------
+Requirements: macOS, Git, Python 3.12+ and full Xcode with iPhoneOS SDK. The
+original binary records SDK 15.4; that historic SDK/toolchain is not redistributed.
+Apple tooling and ordinary compiler/build tools are not part of this bundle.
+
+1. Extract the source asset and enter its directory:
+     tar -xf StremIOS-0.8.3-beta.1-playback-sources.tar.xz
+     cd StremIOS-0.8.3-beta.1-playback-sources
+   Then run:
+     python3 prepare-bundled-sources.py /absolute/new/build-sources
+   This verifies SHA256SUMS.json, extracts sources, applies 42 patches, and seeds
+   contrib/tarballs. It does not download, compile or install anything.
+
+2. In the printed VLCKit source directory, review the upstream build script and
+   its help, then build the desired device framework. For the arm64 selection:
+     ./buildMobileVLCKit.sh -n -v -a aarch64
+   -n preserves the prepared source instead of resetting it from Git. The
+   upstream extras/tools step can obtain ordinary build tools if they are absent;
+   the runtime dependency archives are supplied here. Original upstream CI used
+   buildMobileVLCKit.sh -vf3 for its multi-architecture distribution. The source
+   bundle is not a promise that every newer Xcode builds historic upstream code
+   without toolchain adjustments. Consult the pinned build scripts for options.
+
+Replacing/relinking in StremIOS
+------------------------------
+1. Download the MIT StremIOS source at the same release tag. Keep its libwebp
+   source and licenses. Choose your rebuilt, interface-compatible arm64 iOS
+   MobileVLCKit.framework, including its public Headers directory.
+2. In your local source copy, update the expected hash in scripts/embed-vlckit.sh
+   to SHA256 of your rebuilt arm64 MobileVLCKit binary. This is a build-time
+   integrity pin, not a runtime restriction. You may change the script itself.
+3. Build using your installed Xcode and framework:
+     DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+     MS_VLCKIT_FRAMEWORK=/absolute/MobileVLCKit.framework \
+     MS_LAUNCH_MODE=static-ipad12 ./scripts/build.sh /absolute/build-output
+   The app dynamically links the framework with @rpath and the build signs the
+   framework and app ad hoc. The MIT application source is provided, so separate
+   relinkable proprietary object files are not necessary for this release.
+4. Install your modified build using signing/installation supported by your own
+   device. The tested legacy route is a jailbroken iPad with AppSync; ordinary
+   non-jailbroken iOS requires valid Apple provisioning/signing. Publisher private
+   keys, account credentials, Apple SDKs and DRM are not supplied or required by
+   the source build itself.
+
+SHA256SUMS.json verifies every bundled regular file except itself. Full upstream
+source licenses govern their files; these instructions do not replace them or
+grant rights to media supplied by external services. Charging for the application
+does not remove recipients' MIT/LGPL or other component rights.

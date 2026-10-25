@@ -1,0 +1,193 @@
+{
+  "fullTexts": {
+    "aom": [
+      "LICENSE",
+      "PATENTS"
+    ],
+    "ass": [
+      "COPYING"
+    ],
+    "dav1d": [
+      "COPYING",
+      "doc/PATENTS"
+    ],
+    "dvbpsi": [
+      "COPYING"
+    ],
+    "ebml": [
+      "LICENSE.LGPL"
+    ],
+    "ffmpeg": [
+      "COPYING.LGPLv2.1",
+      "LICENSE.md"
+    ],
+    "flac": [
+      "COPYING.Xiph"
+    ],
+    "freetype2": [
+      "LICENSE.TXT",
+      "docs/FTL.TXT",
+      "src/bdf/README",
+      "src/pcf/README"
+    ],
+    "fribidi": [
+      "COPYING"
+    ],
+    "gcrypt": [
+      "COPYING.LIB",
+      "LICENSES"
+    ],
+    "gpg-error": [
+      "COPYING.LIB"
+    ],
+    "gsm": [
+      "COPYRIGHT"
+    ],
+    "harfbuzz": [
+      "COPYING"
+    ],
+    "lame": [
+      "COPYING",
+      "LICENSE"
+    ],
+    "libarchive": [
+      "COPYING"
+    ],
+    "libdsm": [
+      "COPYING"
+    ],
+    "libebur128": [
+      "COPYING"
+    ],
+    "libplacebo": [
+      "LICENSE"
+    ],
+    "librist": [
+      "COPYING",
+      "contrib/mbedtls/LICENSE"
+    ],
+    "libtasn1": [
+      "COPYING.LESSERv2"
+    ],
+    "libxml2": [
+      "Copyright"
+    ],
+    "live555": [
+      "COPYING"
+    ],
+    "matroska": [
+      "LICENSE.LGPL"
+    ],
+    "modplug": [
+      "COPYING"
+    ],
+    "mpg123": [
+      "COPYING"
+    ],
+    "mysofa": [
+      "LICENSE",
+      "tests/LICENSE.MIT_KEMAR_pinnae"
+    ],
+    "nfs": [
+      "COPYING",
+      "LICENCE-BSD.txt",
+      "LICENCE-LGPL-2.1.txt"
+    ],
+    "ogg": [
+      "COPYING"
+    ],
+    "openjpeg": [
+      "LICENSE"
+    ],
+    "opus": [
+      "COPYING"
+    ],
+    "png": [
+      "LICENSE"
+    ],
+    "protobuf": [
+      "LICENSE"
+    ],
+    "shout": [
+      "COPYING"
+    ],
+    "smb2": [
+      "COPYING",
+      "LICENCE-LGPL-2.1.txt"
+    ],
+    "soxr": [
+      "COPYING.LGPL"
+    ],
+    "spatialaudio": [
+      "LICENSE"
+    ],
+    "speex": [
+      "COPYING"
+    ],
+    "speexdsp": [
+      "COPYING"
+    ],
+    "ssh2": [
+      "COPYING"
+    ],
+    "taglib": [
+      "COPYING.LGPL",
+      "COPYING.MPL"
+    ],
+    "theora": [
+      "LICENSE",
+      "COPYING"
+    ],
+    "twolame": [
+      "COPYING"
+    ],
+    "upnp": [
+      "COPYING"
+    ],
+    "utfcpp": [
+      "LICENSE"
+    ],
+    "vorbis": [
+      "COPYING"
+    ],
+    "vpx": [
+      "LICENSE",
+      "PATENTS"
+    ],
+    "zlib": [
+      "LICENSE"
+    ],
+    "zvbi": [
+      "COPYING.md"
+    ]
+  },
+  "sourceHeaders": {
+    "ffmpeg": [
+      "libavcodec/jfdctfst.c",
+      "libavcodec/jfdctint_template.c",
+      "libavcodec/jrevdct.c"
+    ],
+    "freetype2": [
+      "src/gzip/zlib.h",
+      "src/base/fthash.c",
+      "include/freetype/internal/fthash.h"
+    ],
+    "librist": [
+      "contrib/lz4/lz4.c",
+      "contrib/lz4/xxhash.c",
+      "contrib/contrib_cJSON/cjson/cJSON.c"
+    ],
+    "mysofa": [
+      "src/resampler/speex_resampler.c",
+      "src/hrtf/kdtree.c"
+    ],
+    "spatialaudio": [
+      "source/kiss_fft/kiss_fft.c",
+      "source/kiss_fft/_kiss_fft_guts.h",
+      "source/kiss_fft/kiss_fftr.c"
+    ]
+  },
+  "scanLibraryHeaders": [
+    "libarchive"
+  ]
+}

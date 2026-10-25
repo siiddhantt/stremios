@@ -1,0 +1,30 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+export LC_ALL=C
+package='@PACKAGE@'
+app='@APP_PATH@'
+bundle='@BUNDLE@'
+case "${1:-}" in install|upgrade) ;; *) exit 0 ;; esac
+[ ! -L "$app" ] || { printf '%s\n' 'Refusing to replace a linked application directory.' >&2; exit 1; }
+if [ -e "$app" ]; then
+    owner=$(dpkg-query -S "$app/Info.plist" 2>/dev/null || true)
+    case "$owner" in "$package: $app/Info.plist") ;; *)
+    printf '%s\n' 'An unmanaged app already occupies the installation path. Nothing was removed.' >&2
+        exit 1 ;;
+    esac
+fi
+# Pre-Depends makes this registration query available before unpacking.
+# Fail closed if it fails. Do not print other installed applications.
+registered=$(uicache -l) || { printf '%s\n' 'Could not check existing app registration.' >&2; exit 1; }
+matching_registration() {
+    printf '%s\n' "$registered" | while IFS= read -r line; do
+        case "$line" in "$bundle : "*) printf '%s\n' "${line#"$bundle : "}" ;; esac
+    done
+}
+existing=$(matching_registration)
+if [ -n "$existing" ] && [ "$existing" != "$app" ]; then
+    printf '%s\n' 'This app is already installed through an IPA. Keep that installation; this package does not automatically migrate it or remove its data.' >&2
+    exit 1
+fi

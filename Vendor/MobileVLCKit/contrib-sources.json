@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 1,
+  "frameworkVersion": "3.7.4",
+  "vlcCommit": "6de05adcbaf2e8b85fe86aad4169393098628119",
+  "vlckitCommit": "2c06f8f64ce6e8f48fd25337079a6051e0ca9bdd",
+  "contribSources": [
+    {
+      "package": "aom",
+      "filename": "libaom-3.15.0.tar.gz",
+      "sha512": "68712a22e6912cdc16a208a62b4bd3a21fd4840924ed09191a4b85717bb6412b306ef302037e2ec4b524cdfb3c63ea2743671b989d84e45eca9c962eaa4d466b",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/aom/libaom-3.15.0.tar.gz",
+        "https://storage.googleapis.com/aom-releases/libaom-3.15.0.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "ass",
+      "filename": "libass-0.17.5.tar.xz",
+      "sha512": "b9e06023e9f5760ba1946f8dbcd8c411908bc6c77030099098f8252edabd31c98a6523cffb7cccf7b62e12bb374d136600a98e29a7916ccc218100ff694bfb7c",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/ass/libass-0.17.5.tar.xz",
+        "https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "dav1d",
+      "filename": "dav1d-1.5.4.tar.xz",
+      "sha512": "75ab7c922bc9647d73534c9f6c95a514748557adbf7a4debf95eee52ef1db681012cbaad165a46141d904cdd01c1e6319cdea33d254afb5c6b3d968679e55b98",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/dav1d/dav1d-1.5.4.tar.xz",
+        "https://downloads.videolan.org/pub/videolan/dav1d/1.5.4/dav1d-1.5.4.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "dvbpsi",
+      "filename": "libdvbpsi-1.3.3.tar.bz2",
+      "sha512": "70f9e783a947e026ea50afe98ad2b3bfce075bd8d76932f73a6253b077a3a180aa632e9a1fff20308e2f0f3f881d727b4e4aad9b8da2b384edf9a3a0f9eacc69",
+      "urls": [
+        "https://downloads.videolan.org/pub/videolan/libdvbpsi/1.3.3/libdvbpsi-1.3.3.tar.bz2"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "ebml",
+      "filename": "libebml-1.4.6.tar.xz",
+      "sha512": "86b469a1c1352e9ea6f581267ab8fc357575f2e410a3a732b12203575744667b152c135cf314978500d6a19fac4ef4015b89fdcfcca43f5bfc49f63e27ecbce2",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/ebml/libebml-1.4.6.tar.xz",
+        "https://dl.matroska.org/downloads/libebml/libebml-1.4.6.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "ffmpeg",
+      "filename": "ffmpeg-8.1.2.tar.xz",
+      "sha512": "b3adc16fe426217bb607da01c4137cee0a9788fc08e077874336db185d2b7287746a7dc94cf0181ea92cd8afcdb06094ee9456e2986112354f84538cb9a5ed0b",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/ffmpeg/ffmpeg-8.1.2.tar.xz",
+        "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "flac",
+      "filename": "flac-1.4.2.tar.xz",
+      "sha512": "20bdf0990a7432ac765037764bc8733a0d5646866fe6cc6f4868152d2a051c89676e501012ae489c7f87b3aacb45a5b30265afaca164cf0cf53ac058644a74c5",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/flac/flac-1.4.2.tar.xz",
+        "https://github.com/xiph/flac/releases/download/1.4.2/flac-1.4.2.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "freetype2",
+      "filename": "freetype-2.14.3.tar.xz",
+      "sha512": "43de86ea70b4b47f6efaae67f3440f65a24ffac29dc6d11203a9764e4f1a749ce1ba7645acd23525220b3ba12ddad8687b962b9f1254e2c0a86070854e85d5a0",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/freetype2/freetype-2.14.3.tar.xz",
+        "https://downloads.sourceforge.net/project/freetype/freetype2/2.14.3/freetype-2.14.3.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "fribidi",
+      "filename": "fribidi-1.0.12.tar.xz",
+      "sha512": "cd624f519b270303e89139ced4020115abe3b6a0d774ba57f17fa69c6036edebd76c635a42c468786e76c6ffb0c7d63b435cd2663bc2fba08dec405840dd8e49",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/fribidi/fribidi-1.0.12.tar.xz",
+        "https://github.com/fribidi/fribidi/releases/download/v1.0.12/fribidi-1.0.12.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "gcrypt",
+      "filename": "libgcrypt-1.12.2.tar.bz2",
+      "sha512": "dc1a4a6c00a0d84d90c8d71f4bd121b968c80df74137d6e8867f1f4cc014a539efb5238c1a1429d7cb95e493a40718fc19252edc592ffe0f43057b372896591c",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/gcrypt/libgcrypt-1.12.2.tar.bz2",
+        "https://www.gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.12.2.tar.bz2"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "gpg-error",
+      "filename": "libgpg-error-1.61.tar.bz2",
+      "sha512": "3e59eb52d061709fd8dfe56a4b36d2d5b49dd5e0c90c283899669d6a355286cb3a3f851631f8456c78c48b652bb31a4c1f8b081ccdf87e5db64b313d141a7670",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/gpg-error/libgpg-error-1.61.tar.bz2",
+        "https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-1.61.tar.bz2"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "gsm",
+      "filename": "libgsm_1.0.13.tar.gz",
+      "sha512": "0d0cf9e1e81e64cd84f588c1e4f0cb74b849d45e41fdebf860f63588084c73c7c5198bfe73a6c976bda5735ee516661d3db00afbb5cc5886a7ee3a7b31d673aa",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/gsm/libgsm_1.0.13.tar.gz",
+        "https://libgsm.sourcearchive.com/downloads/1.0.13/libgsm_1.0.13.orig.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "harfbuzz",
+      "filename": "harfbuzz-14.2.1.tar.xz",
+      "sha512": "481dca68900e57895d3671baf0595c2d3a26f4f08d0db5662e83089f0d0ff6dc0c28c64c2811eb0f812b0525ed428e90db44f091a88bef47ace2f97d8285b013",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/harfbuzz/harfbuzz-14.2.1.tar.xz",
+        "https://github.com/harfbuzz/harfbuzz/releases/download/14.2.1/harfbuzz-14.2.1.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "lame",
+      "filename": "lame-3.100.tar.gz",
+      "sha512": "0844b9eadb4aacf8000444621451277de365041cc1d97b7f7a589da0b7a23899310afd4e4d81114b9912aa97832621d20588034715573d417b2923948c08634b",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/lame/lame-3.100.tar.gz",
+        "https://downloads.sourceforge.net/project/lame/lame-3.100.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libarchive",
+      "filename": "libarchive-3.8.9.tar.xz",
+      "sha512": "f37425417a9e3fdc194a2b892137452ddba6601c69e822598692d4d776c573a90e70aac4598d47c915615facc45d0c83fc46c24856ddf04afd7494b63bb9f137",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libarchive/libarchive-3.8.9.tar.xz",
+        "https://github.com/libarchive/libarchive/releases/download/v3.8.9/libarchive-3.8.9.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libdsm",
+      "filename": "libdsm-0.4.3.tar.xz",
+      "sha512": "4abe2318aa5d63397404ce87fc42be30d364dffef3bdf6e081a2bb3ac4f011f39fa8acb5ba06361e94795a308df321b077e7a3cf2ec10d5e1e6c9b912cbbd8ba",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libdsm/libdsm-0.4.3.tar.xz",
+        "https://github.com/videolabs/libdsm/releases/download/v0.4.3/libdsm-0.4.3.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libebur128",
+      "filename": "libebur128-1.2.4.tar.gz",
+      "sha512": "d9aec133aca9240f7e859aae30cfcab07ba7aa20378187d53dfeec4cd3840d49bb117fa0698591bac04d95f9d8b5cd0b1fbe41c364694f2fa8267dd690b2dc02",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libebur128/libebur128-1.2.4.tar.gz",
+        "https://github.com/jiixyj/libebur128/archive/v1.2.4.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libplacebo",
+      "filename": "libplacebo-0.2.1.tar.gz",
+      "sha512": "d662c1972ee36f45d1e75b1c38edb7d2a47a1df8dedd811c37662ae88514403c978088bc4a42c3bf850b22e9cc882cb5de730bf2463f36caf284f6172e177dbb",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libplacebo/libplacebo-0.2.1.tar.gz",
+        "https://github.com/haasn/libplacebo/archive/v0.2.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "librist",
+      "filename": "librist-v0.2.20.tar.gz",
+      "sha512": "3553d5db0cf67ab07ff85b55e4948958aa59251c236efa7b6605fce5c8e9552bce967cbfabdb1430cb21c1343b9eeebb582aaeb64bdb569b4cbe7493b8f3844a",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/librist/librist-v0.2.20.tar.gz",
+        "https://code.videolan.org/rist/librist/-/archive/v0.2.20/librist-v0.2.20.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libtasn1",
+      "filename": "libtasn1-4.21.0.tar.gz",
+      "sha512": "6a581c4c072b168bf29a0dec7e59a9329a798e392b7d1033791d0e3166a5d1164e2a7065373a84018d500a01563657900c318b1fd437c227c3174b754f9998d3",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libtasn1/libtasn1-4.21.0.tar.gz",
+        "https://ftpmirror.gnu.org/gnu/libtasn1/libtasn1-4.21.0.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "libxml2",
+      "filename": "libxml2-2.15.3.tar.xz",
+      "sha512": "6f7f1aabd012454553e851bd1ee548fbd14d21c576f2b2ab9eeedab3dfba51392083f74b34f060e9b538baeea212cdb462b8669c214c711771fb9a897fdc1c60",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/libxml2/libxml2-2.15.3.tar.xz",
+        "https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.3.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "live555",
+      "filename": "live.2016.10.21.tar.gz",
+      "sha512": "10846fd6d5482bbea131ae805137077997e9dec242665e3c01d699d5584154c65049e8c520ea855599e554154a148e61fea77b592d97c814a4a98c773658d8f5",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/live555/live.2016.10.21.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "matroska",
+      "filename": "libmatroska-1.7.2.tar.xz",
+      "sha512": "86b21a0ff3e5149a2824a9f21f9460179d02aecf477f2b9f1f92ce2f991033bd0cb209d81a4aeee2c0c5ffc193dac57a84dd4f529939b12c900f2cfb881618fb",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/matroska/libmatroska-1.7.2.tar.xz",
+        "https://dl.matroska.org/downloads/libmatroska/libmatroska-1.7.2.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "modplug",
+      "filename": "libmodplug-0.8.9.0.tar.gz",
+      "sha512": "880e10154fd367ee24ace53ca7e32a5c1fee7dfff1f934e6499944c12779427da63e2f55f8d6ce25db0a42a5b4424053bf64305b31dbfc4ef6a8909924d655fd",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/modplug/libmodplug-0.8.9.0.tar.gz",
+        "https://downloads.sourceforge.net/project/modplug-xmms/libmodplug-0.8.9.0.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "mpg123",
+      "filename": "mpg123-1.33.6.tar.bz2",
+      "sha512": "83d8fca128b1fd39e336e6052837b16951360d6f1a47919e00d4b7285717ee7cd4dd56c24bd873316ba6969081fe619cda93ebb20771aed052c6e9d07657f2ab",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/mpg123/mpg123-1.33.6.tar.bz2",
+        "https://downloads.sourceforge.net/project/mpg123/mpg123/1.33.6/mpg123-1.33.6.tar.bz2"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "mysofa",
+      "filename": "libmysofa-1.2.1.tar.gz",
+      "sha512": "2058c94cd09aeeabe40975edd320d7447bd9e535108f32b2a5305c023c7bf89f0c2f44df182390b7e4be8f6ffc9b09c2e35817896bb5e63d3ec9f1bd5b7e972c",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/mysofa/libmysofa-1.2.1.tar.gz",
+        "https://github.com/hoene/libmysofa/archive/v1.2.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "nfs",
+      "filename": "libnfs-6.0.2.tar.gz",
+      "sha512": "539790ab98aac7b2f25755b745d1f5e016518f1adb3748b8c58df187048bc31e091915d59e6359bb95c49dd986361cbbf2536edcda02598b0fac236762b61a46",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/nfs/libnfs-6.0.2.tar.gz",
+        "https://github.com/sahlberg/libnfs/archive/libnfs-6.0.2.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "ogg",
+      "filename": "libogg-1.3.6.tar.xz",
+      "sha512": "2168548e57e23fadca4aa66351214b23d699bc3aa47f5d065f8b583a3fe85c99333014a6aa38e4021b0e3750115b88258a6c00cac1e1496cdee5f12cdc633814",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/ogg/libogg-1.3.6.tar.xz",
+        "https://ftp.osuosl.org/pub/xiph/releases/ogg/libogg-1.3.6.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "openjpeg",
+      "filename": "openjpeg-2.5.4.tar.gz",
+      "sha512": "702a10e20caaf8209684ded7c9fcf32f5ba6a972cf2d9fcf2611cdc6a446d2c3bb60324205758e6b6f92278c8cf4ef0fbae511e6ffb45ed6e8df514db0c6ab25",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/openjpeg/openjpeg-2.5.4.tar.gz",
+        "https://github.com/uclouvain/openjpeg/archive/v2.5.4.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "opus",
+      "filename": "opus-1.6.1.tar.gz",
+      "sha512": "93742e86b2eb222808a5055e62627d142e6e7347b3d5aebb4d39b45df78ed7d437746c51eb24d724a7c865d064e9d16f4541a4ce6a82fcf7dcc23427d2252e16",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/opus/opus-1.6.1.tar.gz",
+        "https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.6.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "png",
+      "filename": "libpng-1.6.58.tar.xz",
+      "sha512": "5937d6409d7ad564c9dba7969c5d39eea8bbc01936f433bf5936c872ec290dea353783f89bded91e124b3b3b15518320097de365acd3b0bcc922a0e90c94adc8",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/png/libpng-1.6.58.tar.xz",
+        "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.58/libpng-1.6.58.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "protobuf",
+      "filename": "protobuf-3.4.1-cpp.tar.gz",
+      "sha512": "6189e23c7e381f62e971bd0e35ad9c3ed8effe584755357013887c6a582cb5a9a654c39affa2a073b658854138f31bfb70f89fa1df494e9386f1d64fd73d07d2",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/protobuf/protobuf-3.4.1-cpp.tar.gz",
+        "https://github.com/google/protobuf/releases/download/v3.4.1/protobuf-cpp-3.4.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "shout",
+      "filename": "libshout-2.4.6.tar.gz",
+      "sha512": "e8478cdbf9a27674c16a7b620d1576f2e31a47262b8e29b314d0f46d4e5be24b9a29790b7b226f48939bc34cacf5734fae0aa5686c7ed5879cdbd827ff8e0339",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/shout/libshout-2.4.6.tar.gz",
+        "https://ftp.osuosl.org/pub/xiph/releases/libshout/libshout-2.4.6.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "smb2",
+      "filename": "libsmb2-6.1.tar.gz",
+      "sha512": "7f481b22f90b82d19c6bb29537ef10229b3ff4aff3d46dff5b11ee22c9c0410f1d58f466cf0774507d1d6f03c06dd82b223b1f4be75da239402e57749382fe5f",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/smb2/libsmb2-6.1.tar.gz",
+        "https://github.com/sahlberg/libsmb2/archive/refs/tags/libsmb2-6.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "soxr",
+      "filename": "soxr-0.1.3-Source.tar.xz",
+      "sha512": "f4883ed298d5650399283238aac3dbe78d605b988246bea51fa343d4a8ce5ce97c6e143f6c3f50a3ff81795d9c19e7a07217c586d4020f6ced102aceac46aaa8",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/soxr/soxr-0.1.3-Source.tar.xz",
+        "https://github.com/chirlu/soxr/archive/refs/tags/0.1.3.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "spatialaudio",
+      "filename": "spatialaudio-0.3.0.tar.bz2",
+      "sha512": "ef1835a94cd87c55ac9327762ae8f1143272de2463ca850299be15d6cf7f5a554e536cc18f70475c25e2c78f434b9c51de158a7246956c8c1f9de3256a67b87a",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/spatialaudio/spatialaudio-0.3.0.tar.bz2",
+        "https://github.com/videolabs/libspatialaudio/releases/download/0.3.0/spatialaudio-0.3.0.tar.bz2"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "speex",
+      "filename": "speex-1.2.1.tar.gz",
+      "sha512": "52e00300df82e1c7fb527b245af02b99a1f37faef74d004b7cd981052f1aa22a412cb18f5c7a5618df4c958f727c97eb7385beec99d68548d5b02e76192d4e0a",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/speex/speex-1.2.1.tar.gz",
+        "https://ftp.osuosl.org/pub/xiph/releases/speex/speex-1.2.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "speexdsp",
+      "filename": "speexdsp-1.2.1.tar.gz",
+      "sha512": "41b5f37b48db5cb8c5a0f6437a4a8266d2627a5b7c1088de8549fe0bf0bb3105b7df8024fe207eef194096e0726ea73e2b53e0a4293d8db8e133baa0f8a3bad3",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/speexdsp/speexdsp-1.2.1.tar.gz",
+        "https://ftp.osuosl.org/pub/xiph/releases/speex/speexdsp-1.2.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "ssh2",
+      "filename": "libssh2-1.11.1.tar.xz",
+      "sha512": "8322b54a522b0cbbb07916d29ec045c08f8ed94bd8abb5e524038640e90a317667a25be46d95b62b101ed726ade0a51a90fb246cf34c045c38f927f4e439e431",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/ssh2/libssh2-1.11.1.tar.xz",
+        "https://www.libssh2.org/download/libssh2-1.11.1.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "taglib",
+      "filename": "taglib-1.13.1.tar.gz",
+      "sha512": "986231ee62caa975afead7e94630d58acaac25a38bc33d4493d51bd635d79336e81bba60586d7355ebc0670e31f28d32da3ecceaf33292e4bc240c64bf00f35b",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/taglib/taglib-1.13.1.tar.gz",
+        "https://taglib.org/releases/taglib-1.13.1.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "theora",
+      "filename": "libtheora-1.1.1.tar.xz",
+      "sha512": "032fb60f10ac0074ec87d5f8c586702309edc50dc0d2842d2f9b9c46ebd1500acc399e9309f858f318fff5b8fbe953234db3afb54ed74a03d0f2c6ee8c3ed481",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/theora/libtheora-1.1.1.tar.xz",
+        "https://ftp.osuosl.org/pub/xiph/releases/theora/libtheora-1.1.1.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "twolame",
+      "filename": "twolame-0.4.0.tar.gz",
+      "sha512": "cc594bc8d2322922280f915a3c0aa52540cca0350d6498bc96f3f60fd6e53f951e775ea015a44bdb29ec883b46b31a0e5483f6a5c188b02e30008289273c7d03",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/twolame/twolame-0.4.0.tar.gz",
+        "https://downloads.sourceforge.net/project/twolame/twolame-0.4.0.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "upnp",
+      "filename": "pupnp-release-1.14.31.tar.gz",
+      "sha512": "be0f876adb7a0799187531cc83a29afd5bfe8f7772e909f88faf406e344f992ccb07ef410f7511766576bde8128478926e33cebfcfa8ed1ba15fe136e0bfc8c7",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/upnp/pupnp-release-1.14.31.tar.gz",
+        "https://github.com/pupnp/pupnp/archive/refs/tags/release-1.14.31.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "utfcpp",
+      "filename": "utfcpp-3.2.5.tar.gz",
+      "sha512": "1ce12c8158a2f3bcddec104ceacedaea4031b4c88fc0fa1f1fae8dfa8df81c846861df9d01e8f294d79b9e4ab8c51bd1289f404eed24d07abc760688fee13090",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/utfcpp/utfcpp-3.2.5.tar.gz",
+        "https://github.com/nemtrif/utfcpp/archive/refs/tags/v3.2.5.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "vorbis",
+      "filename": "libvorbis-1.3.7.tar.xz",
+      "sha512": "bbf5f11f623d959b3ba98d6b52806521b0b918b59b867f0658c153ea1013293364eead4987e9e71f8798021379310860a2e548fcf89d10caf23d45e41aba45cd",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/vorbis/libvorbis-1.3.7.tar.xz",
+        "https://ftp.osuosl.org/pub/xiph/releases/vorbis/libvorbis-1.3.7.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "vpx",
+      "filename": "libvpx-1.16.0.tar.gz",
+      "sha512": "07f5e352411d6c0be331706d1835ac89bafbeddcbbac5542b473323766e9e974f4f68b33590f2aa50a7d8d69468a642b508cbb0a7c49a82c9933b07820f9c9d9",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/vpx/libvpx-1.16.0.tar.gz",
+        "https://github.com/webmproject/libvpx/archive/v1.16.0.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "zlib",
+      "filename": "zlib-1.3.2.tar.xz",
+      "sha512": "cf3d49fbabddc57cca99858feeca8f910e9de42a16014cddd406814d2d24ee33fee2af3805d7efbb1b04b05f55818092b000daf82502b675df65f2512c353f73",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/zlib/zlib-1.3.2.tar.xz",
+        "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    },
+    {
+      "package": "zvbi",
+      "filename": "zvbi-0.2.45.tar.gz",
+      "sha512": "c627b65627446287cededd26857a7f25191adc8c42cab5a66e76f9673e06cafa52d9c3e2d31e60f949bbcaa155f61b31d775876f97f3f5c7cffe980548992a07",
+      "urls": [
+        "https://downloads.videolan.org/pub/contrib/zvbi/zvbi-0.2.45.tar.gz",
+        "https://github.com/zapping-vbi/zvbi/archive/refs/tags/v0.2.45.tar.gz"
+      ],
+      "selection": "pinned upstream iOS arm64 contrib build selection"
+    }
+  ]
+}

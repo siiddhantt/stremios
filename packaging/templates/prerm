@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+# Keep registration intact during an upgrade. Unregister only this app on remove.
+# Unregistration does not request removal of its MobileContainerManager data.
+case "${1:-}" in remove) uicache -u '@APP_PATH@' ;; esac

@@ -1,0 +1,16 @@
+{
+  "package": "local.ministream.ipad",
+  "name": "StremIOS",
+  "appBundle": "StremIOS.app",
+  "bundleIdentifier": "local.ministream.ipad",
+  "executable": "StremIOS",
+  "architecture": "iphoneos-arm",
+  "maintainer": "Siddhant Rai",
+  "homepage": "https://github.com/siiddhantt/stremios",
+  "support": "https://github.com/siiddhantt/stremios/issues",
+  "section": "Applications",
+  "firmwareMinimum": "12.0",
+  "firmwareMaximumExclusive": "13.0",
+  "description": "A native Stremio-compatible iPad client. Public beta for rootful iOS 12.",
+  "testedDevice": "iPad mini 2 running iOS 12.5.8"
+}

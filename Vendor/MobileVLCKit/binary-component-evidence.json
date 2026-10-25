@@ -1,0 +1,479 @@
+[
+  {
+    "package": "aom",
+    "filename": "libaom-3.15.0.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_aom_codec_version"
+      }
+    ]
+  },
+  {
+    "package": "ass",
+    "filename": "libass-0.17.5.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_ass_library_init"
+      }
+    ]
+  },
+  {
+    "package": "dav1d",
+    "filename": "dav1d-1.5.4.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_dav1d_open"
+      }
+    ]
+  },
+  {
+    "package": "dvbpsi",
+    "filename": "libdvbpsi-1.3.3.tar.bz2",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_dvbpsi_new"
+      }
+    ]
+  },
+  {
+    "package": "ebml",
+    "filename": "libebml-1.4.6.tar.xz",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "libebml"
+      }
+    ]
+  },
+  {
+    "package": "ffmpeg",
+    "filename": "ffmpeg-8.1.2.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_avcodec_alloc_context3"
+      },
+      {
+        "type": "versionString",
+        "value": "Lavc62.28.102"
+      }
+    ]
+  },
+  {
+    "package": "flac",
+    "filename": "flac-1.4.2.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_FLAC__stream_decoder_new"
+      }
+    ]
+  },
+  {
+    "package": "freetype2",
+    "filename": "freetype-2.14.3.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_FT_Init_FreeType"
+      }
+    ]
+  },
+  {
+    "package": "fribidi",
+    "filename": "fribidi-1.0.12.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_fribidi_log2vis"
+      }
+    ]
+  },
+  {
+    "package": "gcrypt",
+    "filename": "libgcrypt-1.12.2.tar.bz2",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_gcry_check_version"
+      }
+    ]
+  },
+  {
+    "package": "gpg-error",
+    "filename": "libgpg-error-1.61.tar.bz2",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_gpg_strerror"
+      }
+    ]
+  },
+  {
+    "package": "gsm",
+    "filename": "libgsm_1.0.13.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_gsm_create"
+      }
+    ]
+  },
+  {
+    "package": "harfbuzz",
+    "filename": "harfbuzz-14.2.1.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_hb_version"
+      }
+    ]
+  },
+  {
+    "package": "lame",
+    "filename": "lame-3.100.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_lame_init"
+      }
+    ]
+  },
+  {
+    "package": "libarchive",
+    "filename": "libarchive-3.8.9.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_archive_read_new"
+      }
+    ]
+  },
+  {
+    "package": "libdsm",
+    "filename": "libdsm-0.4.3.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_smb_session_new"
+      }
+    ]
+  },
+  {
+    "package": "libebur128",
+    "filename": "libebur128-1.2.4.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_ebur128_init"
+      }
+    ]
+  },
+  {
+    "package": "libplacebo",
+    "filename": "libplacebo-0.2.1.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_pl_context_create"
+      }
+    ]
+  },
+  {
+    "package": "librist",
+    "filename": "librist-v0.2.20.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_rist_receiver_create"
+      }
+    ]
+  },
+  {
+    "package": "libtasn1",
+    "filename": "libtasn1-4.21.0.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_asn1_array2tree"
+      }
+    ]
+  },
+  {
+    "package": "libxml2",
+    "filename": "libxml2-2.15.3.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_xmlInitParser"
+      }
+    ]
+  },
+  {
+    "package": "live555",
+    "filename": "live.2016.10.21.tar.gz",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "liveMedia"
+      },
+      {
+        "type": "binaryString",
+        "value": "RTSPClient"
+      }
+    ]
+  },
+  {
+    "package": "matroska",
+    "filename": "libmatroska-1.7.2.tar.xz",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "libmatroska"
+      }
+    ]
+  },
+  {
+    "package": "modplug",
+    "filename": "libmodplug-0.8.9.0.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_ModPlug_Load"
+      }
+    ]
+  },
+  {
+    "package": "mpg123",
+    "filename": "mpg123-1.33.6.tar.bz2",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_mpg123_init"
+      }
+    ]
+  },
+  {
+    "package": "mysofa",
+    "filename": "libmysofa-1.2.1.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_mysofa_load"
+      }
+    ]
+  },
+  {
+    "package": "nfs",
+    "filename": "libnfs-6.0.2.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_nfs_init_context"
+      }
+    ]
+  },
+  {
+    "package": "ogg",
+    "filename": "libogg-1.3.6.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_ogg_sync_init"
+      }
+    ]
+  },
+  {
+    "package": "openjpeg",
+    "filename": "openjpeg-2.5.4.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_opj_create_decompress"
+      }
+    ]
+  },
+  {
+    "package": "opus",
+    "filename": "opus-1.6.1.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_opus_decoder_create"
+      }
+    ]
+  },
+  {
+    "package": "png",
+    "filename": "libpng-1.6.58.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_png_create_read_struct"
+      }
+    ]
+  },
+  {
+    "package": "protobuf",
+    "filename": "protobuf-3.4.1-cpp.tar.gz",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "protobuf"
+      }
+    ]
+  },
+  {
+    "package": "shout",
+    "filename": "libshout-2.4.6.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_shout_new"
+      }
+    ]
+  },
+  {
+    "package": "smb2",
+    "filename": "libsmb2-6.1.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_smb2_init_context"
+      }
+    ]
+  },
+  {
+    "package": "soxr",
+    "filename": "soxr-0.1.3-Source.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_soxr_create"
+      }
+    ]
+  },
+  {
+    "package": "spatialaudio",
+    "filename": "spatialaudio-0.3.0.tar.bz2",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "BFormat"
+      },
+      {
+        "type": "binaryString",
+        "value": "Ambisonic"
+      }
+    ]
+  },
+  {
+    "package": "speex",
+    "filename": "speex-1.2.1.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_speex_decoder_init"
+      }
+    ]
+  },
+  {
+    "package": "speexdsp",
+    "filename": "speexdsp-1.2.1.tar.gz",
+    "evidence": []
+  },
+  {
+    "package": "ssh2",
+    "filename": "libssh2-1.11.1.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_libssh2_session_init_ex"
+      }
+    ]
+  },
+  {
+    "package": "taglib",
+    "filename": "taglib-1.13.1.tar.gz",
+    "evidence": [
+      {
+        "type": "binaryString",
+        "value": "TagLib"
+      }
+    ]
+  },
+  {
+    "package": "theora",
+    "filename": "libtheora-1.1.1.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_th_decode_alloc"
+      }
+    ]
+  },
+  {
+    "package": "twolame",
+    "filename": "twolame-0.4.0.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_twolame_init"
+      }
+    ]
+  },
+  {
+    "package": "upnp",
+    "filename": "pupnp-release-1.14.31.tar.gz",
+    "evidence": []
+  },
+  {
+    "package": "utfcpp",
+    "filename": "utfcpp-3.2.5.tar.gz",
+    "evidence": []
+  },
+  {
+    "package": "vorbis",
+    "filename": "libvorbis-1.3.7.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_vorbis_synthesis_init"
+      }
+    ]
+  },
+  {
+    "package": "vpx",
+    "filename": "libvpx-1.16.0.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_vpx_codec_dec_init_ver"
+      }
+    ]
+  },
+  {
+    "package": "zlib",
+    "filename": "zlib-1.3.2.tar.xz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_inflate"
+      }
+    ]
+  },
+  {
+    "package": "zvbi",
+    "filename": "zvbi-0.2.45.tar.gz",
+    "evidence": [
+      {
+        "type": "exportedSymbol",
+        "value": "_vbi_decoder_new"
+      }
+    ]
+  }
+]

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+case "${1:-}" in configure|abort-upgrade|abort-remove|abort-deconfigure)
+    uicache -p '@APP_PATH@'
+    ;;
+esac

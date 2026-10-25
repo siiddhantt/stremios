@@ -1,6 +1,7 @@
 StremIOS playback dependency: MobileVLCKit 3.7.4
 
-This directory contains provenance, a fetch recipe and the unchanged LGPL 2.1
+This directory contains provenance, verified source-fetch and packaging recipes,
+component manifests, replacement instructions and the unchanged LGPL 2.1
 license. It contains no compiled framework. The app dynamically links VideoLAN's
 official framework when building the VLC-enabled version; the selected source is
 probed only after the user chooses Play. HLS uses AVPlayer; other supported containers use VideoLAN.
@@ -82,11 +83,44 @@ inspection reports libVLC "3.0.24 Vetinari" and changeset
 The last hash is a generated patched build commit, not an upstream VLC tag.
 No independent byte-for-byte rebuild is claimed.
 
-The --sources option downloads and verifies both immutable source archives.
+The fetch-vlckit.py --sources option downloads and verifies both immutable source archives.
 Their URLs, lengths and SHA256 values are recorded in provenance.json. They
 include the wrapper, VLC code, patches, build scripts and contrib recipes.
-Contrib dependency archives themselves are not fetched by this helper; do not
-describe the two archives alone as a complete, self-contained offline rebuild.
+Contrib dependency archives are fetched separately by fetch-contrib-sources.py.
+Do not describe the two archives alone as a complete dependency source bundle.
+
+Preparing a public binary release
+
+From the project root, fetch the checksum-pinned contrib inputs and assemble the
+source/notices assets into a fresh output directory:
+
+  python3 Vendor/MobileVLCKit/fetch-contrib-sources.py
+  python3 Vendor/MobileVLCKit/assemble-source-bundle.py \
+    --contrib-cache .cache/vlckit/contrib-sources \
+    --upstream-cache .cache/vlckit \
+    --output /absolute/fresh/release-output
+
+The packaging recipe verifies every original archive, retains all 42 upstream
+patches and 48 selected contrib source packages, and includes nested component
+notices. The libmysofa archive is explicitly repacked to omit uncompiled acoustic
+test datasets and Windows prebuilt files; library source and installed data are
+unchanged. Original and distributed checksums plus the exact omission list are
+included. Binary evidence identifies 45 packages; three additional build inputs
+are supplied conservatively. See contrib-sources.json, binary-component-evidence.json
+and SOURCE-AND-RELINKING.txt for the evidence and limits.
+
+Publish the resulting playback-sources.tar.xz, THIRD-PARTY-NOTICES.txt and
+SOURCE-AND-RELINKING.txt beside the matching application source and binary. Install
+the generated notices as Resources/ThirdPartyNotices.txt before the release build
+so a standalone IPA retains its notices. The assembler recognizes its previous
+output when regenerating notices and does not recursively duplicate it.
+
+The bundled prepare-bundled-sources.py validates every bundled file, extracts the
+two upstream trees, applies the 42 patches and seeds the 48 source tarballs without
+network access. This preparation was checked locally; a full framework rebuild
+and byte-identical reproduction are not claimed. Upstream build tools and Apple
+SDKs remain separate prerequisites. The instructions describe library replacement
+and signing a modified app for the recipient's device.
 
 License / modification / redistribution
 
@@ -108,10 +142,8 @@ the library also requires intentionally updating the local integrity pin and
 signing the modified app for the recipient's device. The default build rejects
 an unreviewed or accidentally changed dependency.
 
-The complete unchanged LGPL text and source credit are also included in the
-app's ThirdPartyNotices.txt. This preparation is for the existing local project;
-no app-store publication or public redistribution is performed by these scripts.
-
-Public repository policy: source only. Do not attach an IPA or compiled framework
-to a public release until the applicable corresponding-source, dependency-notice
-and library replacement/relinking obligations have been completed.
+The complete unchanged LGPL text, component notices and source references are
+also included in the app's ThirdPartyNotices.txt. These scripts prepare local
+artifacts; they do not publish a release or submit an app to a store. Keep the
+matching source and notices assets available with binary downloads. Store terms,
+Apple signing and platform eligibility are separate from source preparation.
