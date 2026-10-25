@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/title-landscape.png" width="920" alt="StremIOS on an iPad: full-width title artwork fading into a dark interface, with title information and playback controls" />
+  <img width="850" height="610" alt="output_showcase4" src="https://github.com/user-attachments/assets/b54abcbb-3340-4e5e-89a3-b02e8c3b0703" />
 </p>
 
 <p align="center"><sub>Captured on an iPad mini 2 running iOS 12.5.8.</sub></p>
