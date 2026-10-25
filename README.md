@@ -12,7 +12,8 @@
   <a href="#features">Features</a> ·
   <a href="#get-started">Get started</a> ·
   <a href="#build">Build</a> ·
-  <a href="https://github.com/siiddhantt/stremios/issues">Feedback</a>
+  <a href="https://github.com/siiddhantt/stremios/issues">Feedback</a> ·
+  <a href="https://github.com/sponsors/siiddhantt">Support development</a>
 </p>
 
 <p align="center">
