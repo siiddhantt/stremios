@@ -1,0 +1,18 @@
+{
+  "minVersion": "0.4",
+  "class": "DepictionTabView",
+  "tintColor": "#4D9AFF",
+  "tabs": [{
+    "class": "DepictionStackView",
+    "tabname": "Details",
+    "views": [
+      {"class": "DepictionHeaderView", "title": "StremIOS"},
+      {"class": "DepictionMarkdownView", "markdown": "A free, open-source **public beta** of a native Stremio-compatible client for older iPads. Browse your configured catalogs, keep a local library and continue watching with native or VLC playback.\n\nNo content, account credentials or paid provider access is included. Configure your own supported add-ons; their availability and playback vary."},
+      {"class": "DepictionHeaderView", "title": "Compatibility"},
+      {"class": "DepictionMarkdownView", "markdown": "**Rootful jailbreak, arm64 iPad, iOS 12.x only.** Tested on iPad mini 2 with iOS 12.5.8. This is not a rootless or modern-iOS package. The jailbreak must be active. Other devices have not been validated. Prefer 720p on this hardware; no universal codec, source, battery or 4K performance guarantee."},
+      {"class": "DepictionHeaderView", "title": "Existing IPA installation"},
+      {"class": "DepictionMarkdownView", "markdown": "If StremIOS is already installed through an IPA, keep using that installation and update it with the IPA. This package deliberately refuses an automatic IPA-to-package migration. It never deletes your library, settings or add-on credentials. Package removal removes the app, not its saved data."},
+      {"class": "DepictionMarkdownView", "markdown": "[Source and license](https://github.com/siiddhantt/stremios) · [Report a problem](https://github.com/siiddhantt/stremios/issues)\n\nVersion 0.8.3~beta1. Independent project; not affiliated with Stremio."}
+    ]
+  }]
+}

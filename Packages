@@ -1,0 +1,20 @@
+Package: local.ministream.ipad
+Name: StremIOS
+Version: 0.8.3~beta1
+Architecture: iphoneos-arm
+Maintainer: Siddhant Rai
+Author: Siddhant Rai
+Section: Applications
+Priority: optional
+Installed-Size: 42830
+Pre-Depends: uikittools (>= 2.1)
+Depends: firmware (>= 12.0), firmware (<< 13.0)
+Homepage: https://github.com/siiddhantt/stremios
+Depiction: https://siiddhantt.github.io/stremios/
+SileoDepiction: https://siiddhantt.github.io/stremios/depictions/local.ministream.ipad.json
+Icon: https://siiddhantt.github.io/stremios/icon.png
+Description: A native Stremio-compatible iPad client. Public beta for rootful iOS 12.
+Filename: pool/local.ministream.ipad_0.8.3~beta1_iphoneos-arm.deb
+Size: 18362482
+SHA256: b87cc77cc70efd3caa19efe0e0e79a3c00b08268cf5cf046e11eb4b9fad14569
+

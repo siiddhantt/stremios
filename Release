@@ -1,0 +1,12 @@
+Origin: StremIOS
+Label: StremIOS Public Beta
+Suite: stable
+Version: 1.0
+Codename: stremios
+Architectures: iphoneos-arm
+Components: main
+Description: Rootful iOS 12 iPad packages
+SHA256:
+ f456c3450d31de7aebba647d61e624d2c35809cfee3a466895f6db8cbcf02dc3 769 Packages
+ ed076c26647b5217b57495ab02ce83ce1470fb1ce277155c158a4c8b8dc2b098 442 Packages.gz
+ fc26e4d3ad4f01205fe3a7a4268652092018c9e4a8812fdff4b05e4a967fd9b0 512 Packages.bz2
